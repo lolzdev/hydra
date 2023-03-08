@@ -1,0 +1,9 @@
+# object files
+*.o
+
+# test iso files
+*.iso
+iso/
+
+# kernel elf
+hydra_core
