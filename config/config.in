@@ -1,0 +1,16 @@
+TARGET=__TARGET__
+DEBUG=__DEBUG__
+CC=__CC__
+LD=__LD__
+
+CC:=${TARGET}-${CC}
+LD:=${TARGET}-${LD}
+CFLAGS=-Wall -Wextra -std=c99 -ffreestanding -O2 -pedantic -I${ROOT_DIR}/include
+LDFLAGS=-n -Tarch/${TARGET}/${TARGET}.ld
+ifeq (${TARGET}, x86_64-elf)
+CFLAGS+=-Dx86_64
+endif
+ifeq (${DEBUG},1)
+CFLAGS+=-g -DDEBUG
+LDFLAGS+=-g
+endif

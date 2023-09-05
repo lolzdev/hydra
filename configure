@@ -1,0 +1,23 @@
+#!/usr/bin/env perl
+
+use Getopt::Long;
+
+my $target = 'x86_64-elf';
+my $debug = '0';
+my $cc = 'gcc';
+my $ld = 'ld';
+
+GetOptions('target=s' => \$target, 'debug' => \$debug, 'with-cc=s' => \$cc, 'with-ld=s' => \$ld);
+
+open(IN, '<config/config.in') or die $!;
+open(OUT, '>config/config.mk') or die $!;
+while(<IN>)
+{
+    $_ =~ s/__TARGET__/$target/g;
+    $_ =~ s/__DEBUG__/$debug/g;
+    $_ =~ s/__CC__/$cc/g;
+    $_ =~ s/__LD__/$ld/g;
+    print OUT $_;
+}
+close(IN);
+close(OUT);

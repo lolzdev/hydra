@@ -1,0 +1,6 @@
+config/config.mk
+
+**/*~
+**/*.o
+**/*.swp
+isodir/

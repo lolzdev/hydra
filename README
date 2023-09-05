@@ -1,0 +1,5 @@
+NOTE: this project is under development and it's not usable in any way so far.
+
+Hydra is a POSIX compliant microkernel featuring memory mapped RPC.
+
+See docs/BUILDING for building instructions.

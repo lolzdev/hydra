@@ -1,0 +1,11 @@
+To build hydra you first need to initialize the build system with the `configure` script.
+
+This script accepts some arguments:
+
+--target - specify the target architecture to build the kernel, e.g.: --target=x86-64-elf (default)
+--debug  - create a binary containing debug symbols
+
+Once the build system is initialized you can just run `make` to build the kernel.
+
+AVAILABLE TARGETS:
+    - x86_64-elf
