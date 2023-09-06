@@ -1,34 +1,31 @@
 ENTRY(_start)
 
 SECTIONS {
-  /* Start at image 1 meg */
-  . = 1M;
+	. = 1M;
 
-  /* multiboot section must be first then text */
-  .boot BLOCK(4K) : ALIGN(4K) {
-    KEEP(*(.multiboot))
-  }
+	.boot BLOCK(4K) : ALIGN(4K) {
+    	KEEP(*(.multiboot))
+	}
 
-  /* multiboot section must be first then text */
-  .text BLOCK(4K) : ALIGN(4K) {
-    *(.text)
-  }
+	.text BLOCK(4K) : ALIGN(4K) {
+		*(.text)
+	}
 
-  /* Read-write data (initialized) */
-  .data BLOCK(4K) : ALIGN(4K) {
-    *(.data)
-  }
+	.rodata BLOCK(4K) : ALIGN(4K)
+	{
+		*(.rodata)
+	}
 
-  /* Read-write data (uninitialized) */
-  .bss BLOCK(4K) : ALIGN(4K) {
-    *(COMMON)
-    *(.bss)
-  }
+  	.data BLOCK(4K) : ALIGN(4K) {
+    	*(.data)
+  	}
 
-  /* Stack separate */
-  .stack BLOCK(4K) : ALIGN(4K) {
-    *(.bootstrap_stack)
-  }
+  	.bss BLOCK(4K) : ALIGN(4K) {
+    	*(COMMON)
+		*(.bss)
+	}
 
-  /* Other sections will be here */
+	.stack BLOCK(4K) : ALIGN(4K) {
+		*(.bootstrap_stack)
+	}
 }

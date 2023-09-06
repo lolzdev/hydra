@@ -5,7 +5,7 @@ LD=__LD__
 
 CC:=${TARGET}-${CC}
 LD:=${TARGET}-${LD}
-CFLAGS=-Wall -Wextra -std=c99 -ffreestanding -O2 -pedantic -I${ROOT_DIR}/include
+CFLAGS=-Wall -Wextra -std=c99 -ffreestanding -O2 -pedantic -I${ROOT_DIR}/include -mgeneral-regs-only
 LDFLAGS=-n -Tarch/${TARGET}/${TARGET}.ld
 ifeq (${TARGET}, x86_64-elf)
 CFLAGS+=-Dx86_64

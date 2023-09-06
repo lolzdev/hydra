@@ -49,6 +49,8 @@ void printf(char* format,...)
             traverse++;
         }
 
+		if (*traverse == '\0') break;
+
         traverse++;
 
         switch(*traverse)
