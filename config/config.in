@@ -5,12 +5,53 @@ LD=__LD__
 
 CC:=${TARGET}-${CC}
 LD:=${TARGET}-${LD}
-CFLAGS=-Wall -Wextra -std=c99 -ffreestanding -O2 -pedantic -I${ROOT_DIR}/include -mgeneral-regs-only
-LDFLAGS=-n -Tarch/${TARGET}/${TARGET}.ld
+CFLAGS=-Wall \
+    -Wextra \
+    -std=c99 \
+    -ffreestanding \
+    -fno-stack-protector \
+    -fno-stack-check \
+    -fno-lto \
+	-mgeneral-regs-only \
+    -m64 \
+    -march=x86-64 \
+	-mcmodel=kernel \
+    -mno-80387 \
+    -mno-mmx \
+    -mno-sse \
+    -mno-sse2 \
+    -mno-red-zone
+CFLAGS+=-I${ROOT_DIR}/include
+ASFLAGS=-Wall \
+    -Wextra \
+    -std=c99 \
+    -ffreestanding \
+    -fno-stack-protector \
+    -fno-stack-check \
+    -fno-lto \
+	-mgeneral-regs-only \
+	-mcmodel=kernel \
+    -m64 \
+    -march=x86-64 \
+    -mno-80387 \
+    -mno-mmx \
+    -mno-sse \
+    -mno-sse2 \
+    -mno-red-zone
+ASFLAGS+=-I${ROOT_DIR}/include
+LDFLAGS=-m elf_x86_64 \
+    -nostdlib \
+    -static \
+    --no-dynamic-linker \
+    -z text \
+    -z max-page-size=0x1000 \
+	-Tarch/${TARGET}/${TARGET}.ld
 ifeq (${TARGET}, x86_64-elf)
 CFLAGS+=-Dx86_64
+ASFLAGS+=-Dx86_64
 endif
 ifeq (${DEBUG},1)
 CFLAGS+=-g -DDEBUG
+ASLAGS+=-g -DDEBUG
 LDFLAGS+=-g
 endif

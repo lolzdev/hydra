@@ -19,7 +19,7 @@ endif
 %.o: %.c
 	${CC} ${CFLAGS} -o $@ -c $<
 %.o: %.S
-	${CC} ${CFLAGS} -o $@ -c $<
+	${CC} ${ASFLAGS} -o $@ -c $<
 
 .PHONY: clean
 

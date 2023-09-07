@@ -21,15 +21,15 @@ void init_idt()
 	IDTR.limit = ((uint16_t) sizeof(idt_entry_t) * 256) - 1;
 
 	for (int i=0; i < 32; i++) {
-		encode_idt_entry(&IDT[i], (uint64_t) int_void, 0x08, 0x8e);
+		encode_idt_entry(&IDT[i], (uint64_t) int_void, 0x28, 0x8e);
 	}
 
-	encode_idt_entry(&IDT[0], (uint64_t)int_division_by_zero, 0x08, 0x8e);
-	encode_idt_entry(&IDT[3], (uint64_t)int_breakpoint, 0x08, 0x8e);
-	encode_idt_entry(&IDT[13], (uint64_t)int_gpf, 0x08, 0x8e);
-	encode_idt_entry(&IDT[14], (uint64_t)int_page_fault, 0x08, 0x8e);
-	encode_idt_entry(&IDT[32], (uint64_t)int_systimer, 0x08, 0x8e);
-	encode_idt_entry(&IDT[33], (uint64_t)int_keyboard, 0x08, 0x8e);
+	encode_idt_entry(&IDT[0], (uint64_t)int_division_by_zero, 0x28, 0x8e);
+	encode_idt_entry(&IDT[3], (uint64_t)int_breakpoint, 0x28, 0x8e);
+	encode_idt_entry(&IDT[13], (uint64_t)int_gpf, 0x28, 0x8e);
+	encode_idt_entry(&IDT[14], (uint64_t)int_page_fault, 0x28, 0x8e);
+	encode_idt_entry(&IDT[32], (uint64_t)int_systimer, 0x28, 0x8e);
+	encode_idt_entry(&IDT[33], (uint64_t)int_keyboard, 0x28, 0x8e);
 
 	__asm__ volatile ("lidt %0" : : "m"(IDTR));
 	__asm__ volatile ("sti");

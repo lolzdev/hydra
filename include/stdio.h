@@ -4,7 +4,7 @@
 #include <stdarg.h>
 
 #ifdef x86_64
-#include <arch/x86_64-elf/vga.h>
+#include <arch/x86_64-elf/fb.h>
 #endif
 
 void putchar(char c);

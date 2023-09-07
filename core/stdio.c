@@ -3,15 +3,14 @@
 void putchar(char c)
 {
 #ifdef x86_64
-	vga_putchar(c);
+	fb_putchar(c);
 #endif
 }
 
 void puts(const char *s)
 {
-#ifdef x86_64
-	vga_write_string(s);
-#endif
+	while (*(s++) != '\0')
+		putchar(*s);
 }
 
 char *convert(unsigned int num, int base)

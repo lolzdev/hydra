@@ -1,4 +1,3 @@
-SRC=bootstrap.S \
-    boot.c
+SRC=boot.c
 
 include hydra.mk
