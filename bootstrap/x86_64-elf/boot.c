@@ -13,20 +13,26 @@ static volatile struct limine_framebuffer_request framebuffer_request = {
     .revision = 0
 };
 
+static volatile struct limine_memmap_request memmap_request = {
+	.id = LIMINE_MEMMAP_REQUEST,
+	.revision = 0,
+	.response = NULL
+};
+
 __attribute__ ((__noreturn__))
 void _start(void) {
 	struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 	init_fb(framebuffer->width, framebuffer->height, framebuffer->address);
-
+	
+	printf("0x%x\n", framebuffer->address);
 	printf("Initializing hydra\n");
+	uint64_t mem_size = init_mm(memmap_request.response);
+	printf("Memory allocator initialized with %d bytes.\n", mem_size);
 	init_gdt();
 	printf("Global Descriptor Table initialized.\n");
 	init_idt();
 	printf("Interrupt Descriptor Table initialized.\n");
-	//init_paging();
-	//printf("Paging initialized.\n");
-	//uint8_t *a = (uint8_t *)k_page_zalloc(1);
-	//printf("Allocated address: 0x%x\n", (uint64_t)a);
-	//*a = 2;
+	init_paging(memmap_request.response);
+	printf("Paging initialized.\n");
 	while (1);
 }

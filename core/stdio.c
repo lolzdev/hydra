@@ -22,11 +22,11 @@ char *convert(unsigned int num, int base)
     ptr = &buffer[49];
     *ptr = '\0';
 
-    do
-    {
+    while(1) {
         *--ptr = representation[num%base];
+		if (num == 0) break;
         num /= base;
-    }while(num != 0);
+    }
 
     return ptr;
 }

@@ -15,7 +15,7 @@ struct interrupt_frame {
 
 void int_division_by_zero(struct interrupt_frame *frame);
 void int_breakpoint(struct interrupt_frame *frame);
-void int_page_fault(struct interrupt_frame *frame);
+void int_page_fault(struct interrupt_frame *frame, uint64_t error);
 void int_gpf(struct interrupt_frame *frame);
 void int_systimer(struct interrupt_frame *frame);
 void int_keyboard(struct interrupt_frame *frame);

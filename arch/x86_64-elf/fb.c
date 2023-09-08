@@ -26,16 +26,19 @@ void fb_putchar_at(uint32_t x, uint32_t y, char c)
 
 void fb_putchar(char c)
 {
-	if (c == '\n') {
+	if (row >= char_height)
 		row = 0;
-		column++;
+
+	if (c == '\n') {
+		column = 0;
+		row++;
 		return;
 	}
 
-	fb_putchar_at(row, column, c);
-	row++;
-	if (row > char_width) {
-		row = 0;
-		column++;
+	fb_putchar_at(column, row, c);
+	column++;
+	if (column > char_width) {
+		column = 0;
+		row++;
 	}
 }

@@ -1,7 +1,6 @@
 #ifndef XBM_H
 #define XBM_H
 
-#include <fonts/ascii_7x11.h>
 #include <stddef.h>
 #include <stdint.h>
 

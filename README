@@ -1,6 +1,6 @@
 NOTE: this project is under development and it's not usable in any way so far.
 
-Hydra is a POSIX compliant microkernel featuring memory mapped RPC.
+Hydra is a POSIX compliant microkernel featuring memory mapped IPC.
 
 Clone the repository with the `--recursive` flag to get the bootloader.
 See docs/BUILDING for building instructions.
