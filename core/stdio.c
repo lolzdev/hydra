@@ -9,8 +9,10 @@ void putchar(char c)
 
 void puts(const char *s)
 {
-	while (*(s++) != '\0')
+	while (*s != '\0') {
 		putchar(*s);
+		s++;
+	}
 }
 
 char *convert(unsigned int num, int base)

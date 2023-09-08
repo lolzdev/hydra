@@ -61,3 +61,8 @@ void kvmalloc(uint64_t *pml4, void *phys, void *virt, uint64_t flags)
 	
 	pml1[pml1_index] = ((uint64_t)phys) | flags;
 }
+
+void kernel_map(void *phys, void *virt, uint64_t flags)
+{
+	kvmalloc(pml4, phys, virt, flags);
+}

@@ -1,6 +1,6 @@
 include config/config.mk
 
-DIRS=bootstrap core arch
+DIRS=bootstrap core arch drivers
 CONFIGS=${shell realpath config}
 INCLUDE=${shell realpath include}
 OBJ=${shell find ./ -name "*.o" -print}
@@ -30,9 +30,18 @@ iso: kernel
 kernel: ${DIRS}
 	${LD} ${LDFLAGS} -o hydra ${OBJ}
 
+disk.img:
+	@qemu-img create disk.img 500M
+
+qemu: iso disk.img
+	qemu-system-x86_64 -d cpu_reset -M q35 -drive file=hydra.iso,index=1,media=cdrom,format=raw -drive file=disk.img,id=disk,if=none \
+	-device ahci,id=ahci \
+	-device ide-hd,drive=disk,bus=ahci.0
+
 clean: ${DIRS}
 	@rm -rfv hydra
 	@rm -rfv hydra.iso
+	@rm -rfv disk.img
 	@make -C limine clean
 
 ${DIRS}:

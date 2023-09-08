@@ -2,6 +2,7 @@
 #define FB_H
 
 #include <arch/x86_64-elf/xbm.h>
+#include <string.h>
 
 void fb_putchar(char c);
 void fb_putchar_at(uint32_t x, uint32_t y, char c);

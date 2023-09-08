@@ -6,6 +6,7 @@
 #include <arch/x86_64-elf/mm.h>
 #include <arch/x86_64-elf/fb.h>
 #include <arch/x86_64-elf/xbm.h>
+#include <drivers/pci.h>
 #include <limine.h>
 
 static volatile struct limine_framebuffer_request framebuffer_request = {
@@ -24,7 +25,6 @@ void _start(void) {
 	struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 	init_fb(framebuffer->width, framebuffer->height, framebuffer->address);
 	
-	printf("0x%x\n", framebuffer->address);
 	printf("Initializing hydra\n");
 	uint64_t mem_size = init_mm(memmap_request.response);
 	printf("Memory allocator initialized with %d bytes.\n", mem_size);
@@ -34,5 +34,6 @@ void _start(void) {
 	printf("Interrupt Descriptor Table initialized.\n");
 	init_paging(memmap_request.response);
 	printf("Paging initialized.\n");
+	pci_init();
 	while (1);
 }

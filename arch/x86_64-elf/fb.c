@@ -26,10 +26,10 @@ void fb_putchar_at(uint32_t x, uint32_t y, char c)
 
 void fb_putchar(char c)
 {
-	if (row >= char_height)
-		row = 0;
-
 	if (c == '\n') {
+		if (row > char_height) {
+			row = 0;
+		}
 		column = 0;
 		row++;
 		return;

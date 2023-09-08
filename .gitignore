@@ -3,3 +3,5 @@ config/config.mk
 **/*~
 **/*.o
 **/*.swp
+**/*.iso
+**/*.img
