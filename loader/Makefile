@@ -11,6 +11,7 @@ SRCS := loader.c \
 		alloc.c \
 		filesystem.c \
 		elf.c \
+		fb.c \
 		main.c
 OBJS := $(SRCS:.c=.o)
 

@@ -28,10 +28,14 @@
 #define LOADER_H
 
 #include <efi/types.h>
+#include <filesystem.h>
+#include <elf.h>
 
 typedef void (*entry_func_t)(void) __attribute__((sysv_abi));
 
+EFI_STATUS efi_memory_map(UINTN *key, EFI_MEMORY_DESCRIPTOR **descs, UINTN *desc_size, UINT32 *version);
 void *kernel_read(CHAR16 *path);
-void kernel_load(CHAR16 *path);
+EFI_STATUS kernel_load(CHAR16 *path, elf_image *img);
+EFI_STATUS kernel_exit_uefi(void);
 
 #endif

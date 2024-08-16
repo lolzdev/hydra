@@ -32,9 +32,9 @@
 extern EFI_HANDLE *image_handle;
 extern EFI_SYSTEM_TABLE *system_table;
 
-EFI_GUID efi_loaded_image_protocol_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
-EFI_GUID efi_simple_filesystem_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
-EFI_GUID efi_file_info_guid = EFI_FILE_INFO_GUID;
+static EFI_GUID efi_loaded_image_protocol_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+static EFI_GUID efi_simple_filesystem_protocol_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
+static EFI_GUID efi_file_info_guid = EFI_FILE_INFO_GUID;
 
 EFI_STATUS sfs_get_root(EFI_FILE_PROTOCOL **root)
 {

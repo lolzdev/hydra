@@ -24,43 +24,12 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#ifndef TAGS_H
-#define TAGS_H
+#ifndef FB_H
+#define FB_H
 
-#include <stdint.h>
-#include <stddef.h>
+#include <efi/types.h>
+#include <tags.h>
 
-// Hydra tags
-
-#define HYDRA_MEMMAP_FREE 0x1
-#define HYDRA_MEMMAP_KERNEL 0x2
-#define HYDRA_MEMMAP_SERVICE 0x3
-#define HYDRA_MEMMAP_RESERVED 0x4
-
-typedef struct hydra_framebuffer {
-	uint32_t *address;
-	uint64_t size;
-	uint64_t width, height;
-} hydra_framebuffer_t;
-
-
-struct hydra_memmap {
-	uint64_t phys_start, virt_start;
-	uint64_t pages;
-	uint8_t type;
-};
-
-#define HYDRA_TAG_MEMMAP_TYPE 0x1
-struct hydra_tag_memmap {
-	uint8_t type;
-	uint64_t memmap_count;
-	struct hydra_memmap *memmap;
-} __attribute__((packed));
-
-#define HYDRA_TAG_FRAMEBUFFER_TYPE 0x2
-struct hydra_tag_framebuffer {
-	uint8_t type;
-	hydra_framebuffer_t *framebuffers;
-} __attribute__((packed));
+EFI_STATUS fb_get_all(hydra_framebuffer_t **fbs);
 
 #endif

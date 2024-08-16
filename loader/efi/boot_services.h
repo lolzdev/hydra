@@ -218,12 +218,12 @@ typedef
     (*EFI_REGISTER_PROTOCOL_NOTIFY) (EFI_GUID * Protocol,
 				     EFI_EVENT Event, VOID ** Registration);
 
-typedef
-    EFI_STATUS
-    (*EFI_LOCATE_HANDLE) (EFI_LOCATE_SEARCH_TYPE SearchType,
-			  EFI_GUID * Protocol,
-			  VOID * SearchKey,
-			  UINTN * BufferSize, EFI_HANDLE * Buffer);
+typedef EFI_STATUS (*EFI_LOCATE_HANDLE)(
+		EFI_LOCATE_SEARCH_TYPE SearchType,
+		EFI_GUID *Protocol,
+		VOID *SearchKey,
+		UINTN *BufferSize,
+		EFI_HANDLE * Buffer);
 
 typedef
     EFI_STATUS

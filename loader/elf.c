@@ -46,20 +46,21 @@ elf_result elf_map(uint8_t *buffer, elf_image *image)
 	if (status != ELF_OK) return status;
 	elf_header_t *header = (elf_header_t *) buffer;
 
-	elf_program_header_t *p_header = (elf_program_header_t *) (buffer + header->p_header);
+	elf_program_header_t *p_headers = (elf_program_header_t *) (buffer + header->p_header);
 	
 	image->memmap_count = header->ph_num;
 	image->memmap = (struct elf_memmap_entry *) malloc(sizeof(struct elf_memmap_entry) * header->ph_num);
 
 	for (uint32_t i=0; i < header->ph_num; i++) {
-		image->memmap[i].start = p_header->vaddr;
-		image->memmap[i].end = p_header->vaddr + p_header->mem_size;
-		image->memmap[i].type = p_header->type;
-		if (p_header->type == ELF_PT_LOAD) {
-			void *seg = (void *)((uint64_t) buffer + p_header->offset);
-			void *vaddr = (void *) p_header->vaddr;
-			uint64_t seg_size = p_header->file_size;
-			uint64_t mem_size = p_header->mem_size;
+		elf_program_header_t p_header = p_headers[i];
+		image->memmap[i].start = p_header.vaddr;
+		image->memmap[i].end = p_header.vaddr + p_header.mem_size;
+		image->memmap[i].type = p_header.type;
+		if (p_header.type == ELF_PT_LOAD) {
+			void *seg = (void *)((uint64_t) buffer + p_header.offset);
+			void *vaddr = (void *) p_header.vaddr;
+			uint64_t seg_size = p_header.file_size;
+			uint64_t mem_size = p_header.mem_size;
 			uint64_t bss = mem_size - seg_size;
 			if (bss > 0) {
 				memset((void *)((uint64_t)vaddr + seg_size), 0x0, bss);
@@ -67,8 +68,6 @@ elf_result elf_map(uint8_t *buffer, elf_image *image)
 
 			memcpy(vaddr, seg, seg_size);
 		}
-
-		p_header += p_header->file_size;
 	}
 
 	image->tags = NULL;

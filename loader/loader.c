@@ -26,10 +26,10 @@
 
 #include <loader.h>
 #include <efi/types.h>
-#include <elf.h>
 #include <string.h>
 #include <filesystem.h>
 #include <alloc.h>
+#include <fb.h>
 #include <tags.h>
 
 extern EFI_HANDLE *image_handle;
@@ -82,16 +82,25 @@ void *kernel_read(CHAR16 *path)
 	return buffer;
 }
 
+
+EFI_STATUS efi_memory_map(UINTN *key, EFI_MEMORY_DESCRIPTOR **descs, UINTN *desc_size, UINT32 *version)
+{
+	UINTN *size = NULL;
+	system_table->BootServices->GetMemoryMap(size, NULL, NULL, NULL, NULL);
+	*descs = (EFI_MEMORY_DESCRIPTOR *) malloc(*size);
+	return system_table->BootServices->GetMemoryMap(size, *descs, key, desc_size, version);
+}
+
 void kernel_memory_map(elf_image *img, struct hydra_memmap **memmap, uint64_t *size)
 {
-	system_table->BootServices->GetMemoryMap(size, NULL, NULL, NULL, NULL);
-	EFI_MEMORY_DESCRIPTOR *descs = (EFI_MEMORY_DESCRIPTOR *) malloc(*size);
+	EFI_MEMORY_DESCRIPTOR *descs = NULL;
 	UINTN *key = NULL;
-	UINTN *desc_size = NULL;
-	UINT32 *version = NULL;
-	system_table->BootServices->GetMemoryMap(size, descs, key, desc_size, version);
+	UINTN desc_size;
+	UINT32 version;
+	efi_memory_map(key, &descs, &desc_size, &version);
 	*size /= sizeof(EFI_MEMORY_DESCRIPTOR);
 	*memmap = (struct hydra_memmap *) malloc(sizeof(struct hydra_memmap) * (*size + img->memmap_count));
+	
 	for (uint32_t i=0; i < *size; i++) {
 		(*memmap)[i].phys_start = descs[i].PhysicalStart;
 		(*memmap)[i].virt_start = descs[i].VirtualStart;
@@ -132,13 +141,24 @@ void kernel_tags(elf_image *img)
 				stdout->OutputString(stdout, L"Written tag\n\r");
 				break;
 			}
+			case HYDRA_TAG_FRAMEBUFFER_TYPE: {
+				hydra_framebuffer_t *addr;
+				fb_get_all(&addr);
+				struct hydra_tag_framebuffer *tag = (struct hydra_tag_framebuffer *) tags;
+				
+				tag->framebuffers = addr;
+				tags += sizeof(struct hydra_tag_framebuffer);
+				stdout->OutputString(stdout, L"Written tag\n\r");
+
+				break;								 
+			}
 			default:
 				return;
 		}
 	}
 }
 
-void kernel_load(CHAR16 *path)
+EFI_STATUS kernel_load(CHAR16 *path, elf_image *img)
 {
     void *buffer = kernel_read(path);
 
@@ -149,8 +169,7 @@ void kernel_load(CHAR16 *path)
         stdout->OutputString(stdout, L"Invalid ELF file\n\r");
 	}
 
-	elf_image img = {0};
-	res = elf_map(buffer, &img);
+	res = elf_map(buffer, img);
 	if (res != ELF_OK) {
         stdout->OutputString(stdout, L"Can't load ELF file\n\r");
 	} else {
@@ -159,11 +178,30 @@ void kernel_load(CHAR16 *path)
     
     free(buffer);
 
-	kernel_tags(&img);
+	kernel_tags(img);
 
-    system_table->BootServices->ExitBootServices(image_handle, 0);
+	return EFI_SUCCESS;
+}
 
-    entry_func_t entry;
-    entry = (entry_func_t)(uintptr_t)img.entry;
-    entry();
+EFI_STATUS kernel_exit_uefi(void)
+{
+	EFI_STATUS status;
+    EFI_MEMORY_DESCRIPTOR tmp_mmap[1];
+	UINTN efi_mmap_size = sizeof(tmp_mmap), efi_desc_size = 0;
+    UINTN mmap_key = 0;
+	EFI_MEMORY_DESCRIPTOR *efi_mmap = NULL;
+	UINT32 efi_desc_ver = 0;
+
+	stdout->ClearScreen(stdout);
+
+    system_table->BootServices->GetMemoryMap(&efi_mmap_size, tmp_mmap, &mmap_key, &efi_desc_size, &efi_desc_ver);
+    efi_mmap_size += 4096;	
+
+	status = system_table->BootServices->AllocatePool(EfiLoaderData, efi_mmap_size, (void **)&efi_mmap);
+	if (status) return status;
+
+	status = system_table->BootServices->GetMemoryMap(&efi_mmap_size, efi_mmap, &mmap_key, &efi_desc_size, &efi_desc_ver);
+	status = system_table->BootServices->ExitBootServices(*image_handle, mmap_key);
+
+	return status;
 }
