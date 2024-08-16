@@ -1,0 +1,3 @@
+SRCS:=\
+boot/entry.c
+
