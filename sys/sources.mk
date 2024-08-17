@@ -1,3 +1,4 @@
 SRCS:=\
-boot/entry.c
+boot/entry.c \
+log/fb.c
 

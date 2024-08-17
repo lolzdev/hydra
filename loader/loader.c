@@ -91,33 +91,54 @@ EFI_STATUS efi_memory_map(UINTN *key, EFI_MEMORY_DESCRIPTOR **descs, UINTN *desc
 	return system_table->BootServices->GetMemoryMap(size, *descs, key, desc_size, version);
 }
 
-void kernel_memory_map(elf_image *img, struct hydra_memmap **memmap, uint64_t *size)
+void kernel_memory_map(elf_image *img, struct hydra_memmap **memmap, UINTN *count)
 {
-	EFI_MEMORY_DESCRIPTOR *descs = NULL;
-	UINTN *key = NULL;
-	UINTN desc_size;
-	UINT32 version;
-	efi_memory_map(key, &descs, &desc_size, &version);
-	*size /= sizeof(EFI_MEMORY_DESCRIPTOR);
-	*memmap = (struct hydra_memmap *) malloc(sizeof(struct hydra_memmap) * (*size + img->memmap_count));
-	
-	for (uint32_t i=0; i < *size; i++) {
-		(*memmap)[i].phys_start = descs[i].PhysicalStart;
-		(*memmap)[i].virt_start = descs[i].VirtualStart;
-		(*memmap)[i].pages = descs[i].NumberOfPages;
-		(*memmap)[i].type = HYDRA_MEMMAP_RESERVED;
+    EFI_MEMORY_DESCRIPTOR tmp_mmap[1];
+	UINTN efi_mmap_size = sizeof(tmp_mmap), efi_desc_size = 0;
+    UINTN mmap_key = 0;
+	EFI_MEMORY_DESCRIPTOR *efi_mmap = NULL;
+	UINT32 efi_desc_ver = 0;
+
+    system_table->BootServices->GetMemoryMap(&efi_mmap_size, tmp_mmap, &mmap_key, &efi_desc_size, &efi_desc_ver);
+    efi_mmap_size += 4096;	
+	system_table->BootServices->AllocatePool(EfiLoaderData, efi_mmap_size, (void **)&efi_mmap);
+	system_table->BootServices->GetMemoryMap(&efi_mmap_size, efi_mmap, &mmap_key, &efi_desc_size, &efi_desc_ver);
+
+	*count = efi_mmap_size / efi_desc_size;
+	*memmap = (struct hydra_memmap *) malloc(sizeof(struct hydra_memmap) * (*count + img->memmap_count));
+	for (uint32_t i=0; i < *count; i++) {
+		(*memmap)[i].phys_start = efi_mmap[i].PhysicalStart;
+		(*memmap)[i].virt_start = efi_mmap[i].VirtualStart;
+		(*memmap)[i].pages = efi_mmap[i].NumberOfPages;
+		switch (efi_mmap[i].Type) {
+			case EfiReservedMemoryType:
+			case EfiRuntimeServicesData:
+			case EfiRuntimeServicesCode:
+			case EfiUnusableMemory:
+			case EfiACPIReclaimMemory:
+			case EfiACPIMemoryNVS:
+			case EfiMemoryMappedIO:
+			case EfiMemoryMappedIOPortSpace:
+			case EfiPersistentMemory:
+			case EfiUnacceptedMemoryType:
+				(*memmap)[i].type = HYDRA_MEMMAP_RESERVED;
+				break;
+			default:
+				(*memmap)[i].type = HYDRA_MEMMAP_FREE;
+				break;
+		}
 	}
 
 	for (uint32_t i=0; i < img->memmap_count; i++) {
-		(*memmap)[i].phys_start = img->memmap[i+*size].start;
-		(*memmap)[i].virt_start = img->memmap[i+*size].start;
-		(*memmap)[i].pages = (img->memmap[i+*size].end - img->memmap[i+*size].end) / 0x1000;
+		(*memmap)[i].phys_start = img->memmap[i+*count].start;
+		(*memmap)[i].virt_start = img->memmap[i+*count].start;
+		(*memmap)[i].pages = (img->memmap[i+*count].end - img->memmap[i+*count].end) / 0x1000;
 		(*memmap)[i].type = HYDRA_MEMMAP_KERNEL;
 	}
 
-	*size += img->memmap_count;
-
-	free(descs);
+	*count += img->memmap_count;
+	
+	system_table->BootServices->FreePool((void **)&efi_mmap);
 }
 
 void kernel_tags(elf_image *img)
