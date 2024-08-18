@@ -24,33 +24,28 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
+#ifndef MM_H
+#define MM_H
+
+#include <stddef.h>
+#include <stdint.h>
 #include <tags.h>
-#include <log/fb.h>
-#include <mm/mm.h>
-#include <x86_64/gdt.h>
-#include <x86_64/idt.h>
 
-__attribute__((used, section(".hydra_tags")))
-static volatile struct hydra_tag_memmap memmap = {
-	.type = HYDRA_TAG_MEMMAP_TYPE
-};
+/* Size of a page, on x86 it's 4KiB. */
+#define PAGE_SIZE 0x1000
 
-__attribute__((used, section(".hydra_tags")))
-static volatile struct hydra_tag_framebuffer fbs = {
-	.type = HYDRA_TAG_FRAMEBUFFER_TYPE
-};
+/* 
+ * Minimum and maximum block size class, actual block size
+ * in memory is 2^SIZE so the range here goes from PAGE_SIZE
+ * up to 6 MiB.
+ */
+#define MIN_SIZE 0xc
+#define MAX_SIZE 0x1a
 
-void _start(void)
-{
-	hydra_framebuffer_t fb = fbs.framebuffers[0];
-	fb_init(fb.width, fb.height, fb.address);
+void mm_init(struct hydra_memmap *memmap, size_t count);
+void mm_free_range(void *start, void *end);
+void mm_free(void *addr);
+struct block *mm_buddy(struct block *block);
+uint8_t mm_buddy_is_free(struct block *block);
 
-	gdt_init();
-	kprintf("Global Descriptor Table initialized.\n", 0x100);
-	idt_init();
-	kprintf("Interrupt Descriptor Table initialized.\n", 0x100);
-	mm_init(memmap.memmap, memmap.memmap_count);
-	kprintf("Memory manager initialized.");
-
-	while(1);
-}
+#endif

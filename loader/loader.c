@@ -130,10 +130,10 @@ void kernel_memory_map(elf_image *img, struct hydra_memmap **memmap, UINTN *coun
 	}
 
 	for (uint32_t i=0; i < img->memmap_count; i++) {
-		(*memmap)[i].phys_start = img->memmap[i+*count].start;
-		(*memmap)[i].virt_start = img->memmap[i+*count].start;
-		(*memmap)[i].pages = (img->memmap[i+*count].end - img->memmap[i+*count].end) / 0x1000;
-		(*memmap)[i].type = HYDRA_MEMMAP_KERNEL;
+		(*memmap)[i+*count].phys_start = img->memmap[i].start;
+		(*memmap)[i+*count].virt_start = img->memmap[i].start;
+		(*memmap)[i+*count].pages = (img->memmap[i].end - img->memmap[i].end) / 0x1000;
+		(*memmap)[i+*count].type = HYDRA_MEMMAP_KERNEL;
 	}
 
 	*count += img->memmap_count;

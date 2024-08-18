@@ -24,33 +24,7 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#include <tags.h>
-#include <log/fb.h>
-#include <mm/mm.h>
-#include <x86_64/gdt.h>
-#include <x86_64/idt.h>
+#ifndef MATH_H
+#define MATH_H
 
-__attribute__((used, section(".hydra_tags")))
-static volatile struct hydra_tag_memmap memmap = {
-	.type = HYDRA_TAG_MEMMAP_TYPE
-};
-
-__attribute__((used, section(".hydra_tags")))
-static volatile struct hydra_tag_framebuffer fbs = {
-	.type = HYDRA_TAG_FRAMEBUFFER_TYPE
-};
-
-void _start(void)
-{
-	hydra_framebuffer_t fb = fbs.framebuffers[0];
-	fb_init(fb.width, fb.height, fb.address);
-
-	gdt_init();
-	kprintf("Global Descriptor Table initialized.\n", 0x100);
-	idt_init();
-	kprintf("Interrupt Descriptor Table initialized.\n", 0x100);
-	mm_init(memmap.memmap, memmap.memmap_count);
-	kprintf("Memory manager initialized.");
-
-	while(1);
-}
+#endif

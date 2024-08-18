@@ -24,33 +24,54 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#include <tags.h>
+#include <x86_64/trap.h>
 #include <log/fb.h>
-#include <mm/mm.h>
-#include <x86_64/gdt.h>
-#include <x86_64/idt.h>
 
-__attribute__((used, section(".hydra_tags")))
-static volatile struct hydra_tag_memmap memmap = {
-	.type = HYDRA_TAG_MEMMAP_TYPE
-};
-
-__attribute__((used, section(".hydra_tags")))
-static volatile struct hydra_tag_framebuffer fbs = {
-	.type = HYDRA_TAG_FRAMEBUFFER_TYPE
-};
-
-void _start(void)
+__attribute__((interrupt))
+void int_division_by_zero(struct interrupt_frame *frame)
 {
-	hydra_framebuffer_t fb = fbs.framebuffers[0];
-	fb_init(fb.width, fb.height, fb.address);
+	kprintf("panic: division by 0 at: 0x%x\n", frame->ip);
+}
 
-	gdt_init();
-	kprintf("Global Descriptor Table initialized.\n", 0x100);
-	idt_init();
-	kprintf("Interrupt Descriptor Table initialized.\n", 0x100);
-	mm_init(memmap.memmap, memmap.memmap_count);
-	kprintf("Memory manager initialized.");
+
+__attribute__((interrupt))
+void int_breakpoint(struct interrupt_frame *frame)
+{
+	kprintf("panic: breakpoint at: 0x%x\n", frame->ip);
+}
+
+__attribute__((interrupt))
+void int_page_fault(struct interrupt_frame *frame, uint64_t error)
+{
+	kprintf("panic: page fault at: 0x%x\n", frame->ip);
+	uintptr_t cr2;
+	__asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
+	kprintf("error code: 0x%x, address: 0x%x\n", error, cr2);
 
 	while(1);
+}
+
+__attribute__((interrupt))
+void int_gpf(struct interrupt_frame *frame)
+{
+	while(1);
+	kprintf("panic: general protection fault at: 0x%x\n", frame->ip);
+}
+
+__attribute__((interrupt))
+void int_systimer(struct interrupt_frame *frame)
+{
+
+}
+
+__attribute__((interrupt))
+void int_keyboard(struct interrupt_frame *frame)
+{
+
+}
+
+__attribute__((interrupt))
+void int_void(struct interrupt_frame *frame)
+{
+
 }

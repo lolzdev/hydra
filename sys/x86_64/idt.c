@@ -24,33 +24,40 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#include <tags.h>
-#include <log/fb.h>
-#include <mm/mm.h>
-#include <x86_64/gdt.h>
 #include <x86_64/idt.h>
+#include <x86_64/trap.h>
 
-__attribute__((used, section(".hydra_tags")))
-static volatile struct hydra_tag_memmap memmap = {
-	.type = HYDRA_TAG_MEMMAP_TYPE
-};
+__attribute__((aligned(0x10)))
+static idt_entry_t IDT[256];
+static idtr_t IDTR;
 
-__attribute__((used, section(".hydra_tags")))
-static volatile struct hydra_tag_framebuffer fbs = {
-	.type = HYDRA_TAG_FRAMEBUFFER_TYPE
-};
-
-void _start(void)
+void idt_encode_entry(idt_entry_t *entry, uint64_t isr, uint16_t selector, uint8_t flags)
 {
-	hydra_framebuffer_t fb = fbs.framebuffers[0];
-	fb_init(fb.width, fb.height, fb.address);
+	entry->offset_low = (uint64_t) isr & 0xffff;
+	entry->selector = selector;
+	entry->ist = 0x0;
+	entry->attributes = flags;
+	entry->offset_mid = ((uint64_t) isr >> 16) & 0xffff;
+	entry->offset_high = ((uint64_t) isr >> 32) & 0xffffffff;
+	entry->zero = 0x0;
+}
 
-	gdt_init();
-	kprintf("Global Descriptor Table initialized.\n", 0x100);
-	idt_init();
-	kprintf("Interrupt Descriptor Table initialized.\n", 0x100);
-	mm_init(memmap.memmap, memmap.memmap_count);
-	kprintf("Memory manager initialized.");
+void idt_init(void)
+{
+	IDTR.base = (uintptr_t) &IDT[0];
+	IDTR.limit = ((uint16_t) sizeof(idt_entry_t) * 256) - 1;
 
-	while(1);
+	for (int i=0; i < 32; i++) {
+		idt_encode_entry(&IDT[i], (uint64_t) int_void, 0x08, 0x8e);
+	}
+
+	idt_encode_entry(&IDT[0], (uint64_t)int_division_by_zero, 0x08, 0x8e);
+	idt_encode_entry(&IDT[3], (uint64_t)int_breakpoint, 0x08, 0x8e);
+	idt_encode_entry(&IDT[13], (uint64_t)int_gpf, 0x08, 0x8e);
+	idt_encode_entry(&IDT[14], (uint64_t)int_page_fault, 0x08, 0x8e);
+	idt_encode_entry(&IDT[32], (uint64_t)int_systimer, 0x08, 0x8e);
+	idt_encode_entry(&IDT[33], (uint64_t)int_keyboard, 0x08, 0x8e);
+
+	__asm__ volatile ("lidt %0" : : "m"(IDTR));
+	__asm__ volatile ("sti");
 }

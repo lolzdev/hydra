@@ -24,9 +24,20 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#ifndef SYS_MM_H
-#define SYS_MM_H
+#ifndef GDT_H
+#define GDT_H
 
+#include <stdint.h>
+#include <stddef.h>
 
+typedef uint64_t gdt_entry;
+typedef uint64_t gdt_t[3];
+typedef struct {
+	uint16_t limit;
+	uint64_t base;
+} __attribute__((packed)) gdtr_t;
+
+extern void gdt_load(uint16_t limit, uint64_t base);
+void gdt_init(void);
 
 #endif

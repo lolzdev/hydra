@@ -42,7 +42,7 @@ image: all
 
 .PHONY: test
 test: $(OVMF) image
-	@qemu-system-x86_64 -m 2G -drive if=pflash,format=raw,readonly=on,file=$(OVMF) -drive if=ide,format=raw,file=boot.img -debugcon stdio
+	@qemu-system-x86_64 -d cpu_reset -m 2G -drive if=pflash,format=raw,readonly=on,file=$(OVMF) -drive if=ide,format=raw,file=boot.img -debugcon stdio
 
 .PHONY: debug
 debug: $(OVMF) image
