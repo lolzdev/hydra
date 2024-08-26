@@ -1,0 +1,9 @@
+[package]
+name = "loader"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bytemuck = "1.17.0"
+log = "0.4.22"
+uefi = { version = "0.31.0", features = [ "panic_handler", "logger" ] }
