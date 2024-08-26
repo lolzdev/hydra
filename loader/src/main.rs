@@ -3,8 +3,12 @@
 
 mod elf;
 
-use uefi::{prelude::*, data_types::*, table::runtime::ResetType, proto::console::text::{Color, ScanCode, Key}};
+use uefi::{allocator, prelude::*, data_types::*, table::runtime::ResetType, proto::console::text::{Color, ScanCode, Key}};
 use log::error;
+
+
+#[global_allocator]
+static GLOBAL: allocator::Allocator = allocator::Allocator;
 
 #[entry]
 fn main(_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
