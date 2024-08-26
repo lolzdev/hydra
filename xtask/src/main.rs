@@ -28,9 +28,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn setup() -> Result<(), Box<dyn std::error::Error>> {
     fs::copy(project_root().join("config.def.toml"), project_root().join("config.toml"))?;
-    fs::remove_dir_all(&dist_dir())?;
-    fs::create_dir_all(&dist_dir())?;
-    fs::create_dir_all(&dist_dir().join("esp/efi/boot"))?;
+    
     Ok(())
 }
 
@@ -57,6 +55,10 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 fn dist() -> Result<(), Box<dyn std::error::Error>> {
     kernel()?;
     loader()?;
+
+    fs::remove_dir_all(&dist_dir())?;
+    fs::create_dir_all(&dist_dir())?;
+    fs::create_dir_all(&dist_dir().join("esp/efi/boot"))?;
     fs::copy(kernel_dir().join("hydra"), dist_dir().join("esp/efi/boot/hydra"))?;
     fs::copy(loader_dir().join("loader.efi"), dist_dir().join("esp/efi/boot/bootx64.efi"))?;
 
