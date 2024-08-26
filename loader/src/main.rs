@@ -3,12 +3,14 @@
 
 mod elf;
 
+use crate::elf::elf_load;
 use uefi::{allocator, prelude::*, data_types::*, table::runtime::ResetType, proto::console::text::{Color, ScanCode, Key}};
-use log::error;
-
-
-#[global_allocator]
-static GLOBAL: allocator::Allocator = allocator::Allocator;
+use uefi::CString16;
+use uefi::fs::{FileSystem, FileSystemResult};
+use uefi::prelude::BootServices;
+use uefi::proto::media::fs::SimpleFileSystem;
+use uefi::table::boot::ScopedProtocol;
+use log::{info, error};
 
 #[entry]
 fn main(_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
@@ -47,16 +49,24 @@ fn main(_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
         let ret_key = Char16::try_from('\n').unwrap();
         let car_key = Char16::try_from('\r').unwrap();
         match system_table.stdin().read_key().unwrap() {
-            Some(Key::Printable(key)) => match key {
-                r_key => system_table.runtime_services().reset(ResetType::COLD, Status::SUCCESS, None),
-                ret_key => {
+            Some(key) => match key {
+                //Key::Printable(r_key) => system_table.runtime_services().reset(ResetType::COLD, Status::SUCCESS, None),
+                Key::Printable(ret_key) => {
+                    let path: CString16 = CString16::try_from(r"\efi\boot\hydra").unwrap();
+                    let fs: ScopedProtocol<SimpleFileSystem> = system_table.boot_services().get_image_file_system(system_table.boot_services().image_handle()).unwrap();
+                    let mut fs = FileSystem::new(fs);
+                    let data = fs.read(path.as_ref()).unwrap();
+                    info!("{}", data.len());
+                    elf_load(data);
+                    //return Status::SUCCESS;
+                }
+                Key::Special(ScanCode::ESCAPE) => {
                     return Status::SUCCESS;
                 }
+
+                _ => {}
             }
 
-            Some(Key::Special(ScanCode::ESCAPE)) => {
-                return Status::SUCCESS;
-            }
             _ => {}
         }
     }

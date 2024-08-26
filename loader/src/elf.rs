@@ -1,4 +1,5 @@
 extern crate alloc;
+use log::info;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
@@ -56,6 +57,8 @@ fn check_magic(magic: u32) -> bool {
     data[0] == 0x7f && data[1] == 'E' as u8 && data[2] == 'L' as u8 && data[3] == 'F' as u8
 }
 
-fn elf_load(data: alloc::vec::Vec<u8>) {
-    let header: &Header = bytemuck::from_bytes(&data); 
+pub fn elf_load(data: alloc::vec::Vec<u8>) {
+    let header: &Header = bytemuck::from_bytes(&data.as_slice()[..core::mem::size_of::<Header>()]); 
+
+    info!("{:x}", header.magic);
 }
