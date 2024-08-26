@@ -62,6 +62,6 @@ fn check_magic(magic: u32) -> bool {
 pub fn elf_load(data: alloc::vec::Vec<u8>) {
     let header: &Header = bytemuck::from_bytes(&data.as_slice()[..core::mem::size_of::<Header>()]); 
     
-    info!("{}", data.as_slice()[64]);
+    //info!("{}", data.as_slice()[64..core::mem::size_of::<ProgramHeader>() as usize]);
     let program_headers: &[ProgramHeader] = bytemuck::cast_slice(&data.as_slice()[(header.p_header as usize)..(1 as usize * core::mem::size_of::<ProgramHeader>() as usize)]);
 }

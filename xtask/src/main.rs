@@ -55,8 +55,9 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 fn dist() -> Result<(), Box<dyn std::error::Error>> {
     kernel()?;
     loader()?;
+println!("creating");
 
-    fs::remove_dir_all(&dist_dir())?;
+    let _ = fs::remove_dir_all(&dist_dir());
     fs::create_dir_all(&dist_dir())?;
     fs::create_dir_all(&dist_dir().join("esp/efi/boot"))?;
     fs::copy(kernel_dir().join("hydra"), dist_dir().join("esp/efi/boot/hydra"))?;
