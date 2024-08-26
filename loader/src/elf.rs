@@ -27,6 +27,7 @@ struct Header {
 }
 
 #[repr(C)]
+#[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 struct ProgramHeader {
     ty: u32 ,
 	flags: u32 ,
@@ -39,6 +40,7 @@ struct ProgramHeader {
 }
 
 #[repr(C)]
+#[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 struct SectionHeader {
     name: u32 ,
 	ty: u32 ,
@@ -60,5 +62,6 @@ fn check_magic(magic: u32) -> bool {
 pub fn elf_load(data: alloc::vec::Vec<u8>) {
     let header: &Header = bytemuck::from_bytes(&data.as_slice()[..core::mem::size_of::<Header>()]); 
     
-    let program_headers: &[ProgramHeader] = bytemuck::cast_slice();
+    info!("{}", header.ph_num);
+    let program_headers: &[ProgramHeader] = bytemuck::cast_slice(&data.as_slice()[(header.p_header as usize)..(1 as usize * core::mem::size_of::<ProgramHeader>() as usize)]);
 }
