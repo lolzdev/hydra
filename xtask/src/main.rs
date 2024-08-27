@@ -67,10 +67,11 @@ println!("creating");
 }
 
 fn kernel() -> Result<(), Box<dyn std::error::Error>> {
+    let config = config();
     let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
     let status = Command::new(cargo)
         .current_dir(project_root().join("sys"))
-        .args(&["build"])
+        .args(&["rustc", "--", "-C", &format!("link-arg=-T{}", config["sys"]["linker_script"].as_str().unwrap())])
         .status()?;
     if !status.success() {
         Err("kernel: cargo build failed")?;

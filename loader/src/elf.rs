@@ -62,6 +62,17 @@ fn check_magic(magic: u32) -> bool {
 pub fn elf_load(data: alloc::vec::Vec<u8>) {
     let header: &Header = bytemuck::from_bytes(&data.as_slice()[..core::mem::size_of::<Header>()]); 
     
-    //info!("{}", data.as_slice()[64..core::mem::size_of::<ProgramHeader>() as usize]);
-    let program_headers: &[ProgramHeader] = bytemuck::cast_slice(&data.as_slice()[(header.p_header as usize)..(1 as usize * core::mem::size_of::<ProgramHeader>() as usize)]);
+    let program_headers_bytes = &data.as_slice()[(header.p_header as usize)..(header.ph_num as usize * core::mem::size_of::<ProgramHeader>())];
+    let len = program_headers_bytes.len();
+    let ptr = program_headers_bytes.as_ptr() as *const ProgramHeader;
+    let program_headers: &[ProgramHeader] = unsafe { core::slice::from_raw_parts(ptr, len / core::mem::size_of::<ProgramHeader>()) };
+    
+    for &hdr in program_headers {
+        if hdr.ty == 0x1 {
+            let seg_size = hdr.file_size as usize;
+            let code: &[u8] = &data.as_slice()[hdr.offset as usize..hdr.offset as usize + seg_size];
+            let mut mem = unsafe { core::slice::from_raw_parts_mut(hdr.vaddr as *mut u8, seg_size) };
+            mem.copy_from_slice(code);
+        }
+    }
 }

@@ -2,3 +2,6 @@
 bin = "qemu-system-x86_64"
 ovmf_code = "/usr/share/OVFM/OVFM_CODE.fd"
 ovmf_vars = "/usr/share/OVFM/OVFM_VARS.fd"
+
+[sys]
+linker_script = "sys/x86_64.ld"
