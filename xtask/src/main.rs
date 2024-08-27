@@ -27,23 +27,39 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn setup() -> Result<(), Box<dyn std::error::Error>> {
-    fs::copy(project_root().join("config.def.toml"), project_root().join("config.toml"))?;
-    
+    fs::copy(
+        project_root().join("config.def.toml"),
+        project_root().join("config.toml"),
+    )?;
+
     Ok(())
 }
 
 fn run() -> Result<(), Box<dyn std::error::Error>> {
     dist()?;
-    
+
     let config = config();
     let qemu = config["qemu"]["bin"].clone();
     println!("{}", config["qemu"]["bin"].as_str().unwrap());
-    fs::copy(Path::new(config["qemu"]["ovmf_code"].as_str().unwrap()).to_path_buf(), dist_dir().join("ovmf_code.fd"))?;
-    fs::copy(Path::new(config["qemu"]["ovmf_vars"].as_str().unwrap()).to_path_buf(), dist_dir().join("ovmf_vars.fd"))?;
-    
+    fs::copy(
+        Path::new(config["qemu"]["ovmf_code"].as_str().unwrap()).to_path_buf(),
+        dist_dir().join("ovmf_code.fd"),
+    )?;
+    fs::copy(
+        Path::new(config["qemu"]["ovmf_vars"].as_str().unwrap()).to_path_buf(),
+        dist_dir().join("ovmf_vars.fd"),
+    )?;
+
     let status = Command::new(qemu.as_str().unwrap())
         .current_dir(project_root())
-        .args(&["-drive", "if=pflash,format=raw,readonly=on,file=target/dist/ovmf_code.fd", "-drive", "if=pflash,format=raw,readonly=on,file=target/dist/ovmf_vars.fd", "-drive", "format=raw,file=fat:rw:target/dist/esp"])
+        .args(&[
+            "-drive",
+            "if=pflash,format=raw,readonly=on,file=target/dist/ovmf_code.fd",
+            "-drive",
+            "if=pflash,format=raw,readonly=on,file=target/dist/ovmf_vars.fd",
+            "-drive",
+            "format=raw,file=fat:rw:target/dist/esp",
+        ])
         .status()?;
     if !status.success() {
         Err("run: qemu command failed")?;
@@ -55,13 +71,19 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 fn dist() -> Result<(), Box<dyn std::error::Error>> {
     kernel()?;
     loader()?;
-println!("creating");
+    println!("creating");
 
     let _ = fs::remove_dir_all(&dist_dir());
     fs::create_dir_all(&dist_dir())?;
     fs::create_dir_all(&dist_dir().join("esp/efi/boot"))?;
-    fs::copy(kernel_dir().join("hydra"), dist_dir().join("esp/efi/boot/hydra"))?;
-    fs::copy(loader_dir().join("loader.efi"), dist_dir().join("esp/efi/boot/bootx64.efi"))?;
+    fs::copy(
+        kernel_dir().join("hydra"),
+        dist_dir().join("esp/efi/boot/hydra"),
+    )?;
+    fs::copy(
+        loader_dir().join("loader.efi"),
+        dist_dir().join("esp/efi/boot/bootx64.efi"),
+    )?;
 
     Ok(())
 }
@@ -71,7 +93,15 @@ fn kernel() -> Result<(), Box<dyn std::error::Error>> {
     let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
     let status = Command::new(cargo)
         .current_dir(project_root().join("sys"))
-        .args(&["rustc", "--", "-C", &format!("link-arg=-T{}", config["sys"]["linker_script"].as_str().unwrap())])
+        .args(&[
+            "rustc",
+            "--",
+            "-C",
+            &format!(
+                "link-arg=-T{}",
+                config["sys"]["linker_script"].as_str().unwrap()
+            ),
+        ])
         .status()?;
     if !status.success() {
         Err("kernel: cargo build failed")?;
@@ -91,7 +121,6 @@ fn loader() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
-
 }
 
 fn project_root() -> PathBuf {

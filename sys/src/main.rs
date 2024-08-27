@@ -7,5 +7,4 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 }
 
 #[no_mangle]
-fn main() {
-}
+fn main() {}
