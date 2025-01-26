@@ -38,22 +38,13 @@ struct block {
 static size_t mem_size = 0x0;
 static struct hydra_memmap *MMAP;
 static size_t MMAP_SIZE;
-static struct block *freelist[MAX_LEVEL];
-
-static inline uint32_t log2(const uint32_t x) {
-	uint32_t y;
-	asm ( "\tbsr %1, %0\n"
-		: "=r"(y)
-		: "r" (x)
-	);
-	return y;
-}
+static struct block *freelist[MAX_LEVEL+1];
 
 void mm_init(struct hydra_memmap *memmap, size_t count)
 {
 	MMAP = memmap;
 	MMAP_SIZE = count;
-	for (int i=0; i < count; i++) {
+	for (size_t i=0; i < count; i++) {
 		struct hydra_memmap map = memmap[i];
 		size_t size = map.pages * PAGE_SIZE;
 		size_t end = map.phys_start + size;
@@ -71,13 +62,11 @@ void mm_free_range(void *start, size_t size)
 {
 	struct block *prev = mm_create_block((size_t) start, MAX_LEVEL);
 	freelist[MAX_LEVEL] = prev;
-	size_t count = 1;
-	for (int i = (size_t) start + LEVEL_SIZE(MAX_LEVEL); i < (size_t) start + size; i += LEVEL_SIZE(MAX_LEVEL)) {
+	for (size_t i = (size_t) start + LEVEL_SIZE(MAX_LEVEL); i < (size_t) start + size; i += LEVEL_SIZE(MAX_LEVEL)) {
 		if (i >= (size_t) start + size) break;
 		struct block *block = mm_create_block(i, MAX_LEVEL);
 		prev->next = block;
 		prev = block;
-		count++;
 	}
 }
 

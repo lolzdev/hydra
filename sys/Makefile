@@ -23,7 +23,8 @@ CFLAGS+=-O0 -Wall -Wextra -g -ffreestanding \
          -fno-builtin \
 		 -mno-sse \
 		 -mno-sse2 \
-		 -mno-avx
+		 -mno-avx \
+		 -fcolor-diagnostics
 
 LDFLAGS = -nostdlib -static -m elf_x86_64 -z max-page-size=0x1000 -T x86_64/linker.ld
 
