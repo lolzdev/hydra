@@ -4,7 +4,7 @@ CC:=clang
 LD:=ld.lld
 
 CFLAGS:=-I../libc/include -I../loader/include -I. -g
-CFLAGS+=-O0 -Wall -Werror -g -ffreestanding \
+CFLAGS+=-O0 -Wall -Wextra -g -ffreestanding \
 		 -Wno-instantiation-after-specialization \
 		 -Wno-int-conversion \
 		 -Wno-infinite-recursion \

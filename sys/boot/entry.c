@@ -50,7 +50,7 @@ void _start(void)
 	idt_init();
 	kprintf("Interrupt Descriptor Table initialized.\n", 0x100);
 	mm_init(memmap.memmap, memmap.memmap_count);
-	kprintf("Memory manager initialized.");
-
+	kprintf("Memory manager initialized.\n");
+	
 	while(1);
 }

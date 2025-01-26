@@ -111,29 +111,41 @@ void kernel_memory_map(elf_image *img, struct hydra_memmap **memmap, UINTN *coun
 		(*memmap)[i].virt_start = efi_mmap[i].VirtualStart;
 		(*memmap)[i].pages = efi_mmap[i].NumberOfPages;
 		switch (efi_mmap[i].Type) {
-			case EfiReservedMemoryType:
-			case EfiRuntimeServicesData:
-			case EfiRuntimeServicesCode:
-			case EfiUnusableMemory:
-			case EfiACPIReclaimMemory:
-			case EfiACPIMemoryNVS:
-			case EfiMemoryMappedIO:
-			case EfiMemoryMappedIOPortSpace:
-			case EfiPersistentMemory:
-			case EfiUnacceptedMemoryType:
-				(*memmap)[i].type = HYDRA_MEMMAP_RESERVED;
+			case EfiLoaderCode:
+			case EfiLoaderData:
+			case EfiBootServicesCode:
+			case EfiBootServicesData:
+			case EfiConventionalMemory:
+				(*memmap)[i].type = HYDRA_MEMMAP_FREE;
 				break;
 			default:
-				(*memmap)[i].type = HYDRA_MEMMAP_FREE;
+				(*memmap)[i].type = HYDRA_MEMMAP_RESERVED;
 				break;
 		}
 	}
 
+	uint32_t index = 0;
 	for (uint32_t i=0; i < img->memmap_count; i++) {
-		(*memmap)[i+*count].phys_start = img->memmap[i].start;
-		(*memmap)[i+*count].virt_start = img->memmap[i].start;
-		(*memmap)[i+*count].pages = (img->memmap[i].end - img->memmap[i].end) / 0x1000;
-		(*memmap)[i+*count].type = HYDRA_MEMMAP_KERNEL;
+		for (uint32_t j=0; j < *count; j++) {
+			if (((*memmap)[j].phys_start >= img->memmap[i].start && (*memmap)[j].phys_start <= img->memmap[i].end) || ((*memmap)[j].phys_start + (*memmap)[j].pages * 0x1000 >= img->memmap[i].start && (*memmap)[j].phys_start + (*memmap)[j].pages * 0x1000 <= img->memmap[i].end)) {
+
+				if ((*memmap)[j].phys_start < img->memmap[i].start) {
+					(*memmap)[j].pages = ((img->memmap[i].start - (*memmap)[j].phys_start) / 0x1000) + 0x1000;
+				} else if ((*memmap)[j].phys_start + (*memmap)[j].pages * 0x1000 > img->memmap[i].end) {
+					(*memmap)[j].phys_start = img->memmap[i].end+0x1000;
+				} else {
+					(*memmap)[j].type = HYDRA_MEMMAP_KERNEL;
+				}
+
+				stdout->OutputString(stdout, L"Overlap!\n\r");
+				continue;
+			}
+		}
+		(*memmap)[index+*count].phys_start = img->memmap[i].start;
+		(*memmap)[index+*count].virt_start = img->memmap[i].start;
+		(*memmap)[index+*count].pages = (img->memmap[i].end - img->memmap[i].end) / 0x1000;
+		(*memmap)[index+*count].type = HYDRA_MEMMAP_KERNEL;
+		index++;
 	}
 
 	*count += img->memmap_count;

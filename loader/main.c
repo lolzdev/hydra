@@ -91,14 +91,13 @@ EFI_STATUS efi_main(EFI_HANDLE _image_handle, EFI_SYSTEM_TABLE *_system_table)
 				case L'b':
 					elf_image img = {0};
 					kernel_load(L"/boot/kernel/hydra", &img);
-
+					
 					status = kernel_exit_uefi();
 
 					if (status != EFI_SUCCESS) return status;
 					entry_func_t entry;
 					entry = (entry_func_t)(uintptr_t)img.entry;
 					entry();
-
 				case L'r':
 					system_table->RuntimeServices->ResetSystem(EfiResetCold, 0, 0, NULL);
 					break;

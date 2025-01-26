@@ -34,18 +34,18 @@
 /* Size of a page, on x86 it's 4KiB. */
 #define PAGE_SIZE 0x1000
 
-/* 
- * Minimum and maximum block size class, actual block size
- * in memory is 2^SIZE so the range here goes from PAGE_SIZE
- * up to 6 MiB.
- */
-#define MIN_SIZE 0xc
-#define MAX_SIZE 0x1a
+#define MIN_BLOCK 0x1000
+#define MAX_LEVEL 7
+#define MAX_BLOCK MIN_BLOCK * (1 << MAX_LEVEL)
 
 void mm_init(struct hydra_memmap *memmap, size_t count);
-void mm_free_range(void *start, void *end);
-void mm_free(void *addr);
+void mm_free_range(void *start, size_t size);
+void mm_free(void *addr, uint8_t level);
+void *mm_alloc_block(uint8_t level);
 struct block *mm_buddy(struct block *block);
 uint8_t mm_buddy_is_free(struct block *block);
+struct block *mm_create_block(size_t addr, uint8_t level);
+void *mm_alloc_pages(size_t size);
+void *mm_alloc(size_t size);
 
 #endif
