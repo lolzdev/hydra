@@ -52,7 +52,7 @@ test: $(OVMF) image
 
 .PHONY: debug
 debug: $(OVMF) image
-	@qemu-system-x86_64 -no-reboot -s -S -m 2G -drive if=pflash,format=raw,readonly=on,file=$(OVMF) image.iso -debugcon stdio
+	@qemu-system-x86_64 -no-shutdown -no-reboot -d cpu_reset -s -S -m 2G -drive if=pflash,format=raw,readonly=on,file=$(OVMF) image.iso -debugcon stdio
 
 .PHONY: gdb
 gdb:	

@@ -61,8 +61,6 @@ void mm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t
 		/*
 		if (map->type == LIMINE_MEMMAP_USABLE && map->base > 0) {
 			total_free += size;
-			if (size >= LEVEL_SIZE(MAX_LEVEL))
-				kprintf("culo\n");
 		}*/
 	}
 	kprintf("max area: %x - %x\n", max_base, max_base + max_size);
