@@ -7,11 +7,11 @@ LIMINE_DOWNLOAD := limine
 all: limine_build sys
 
 limine_build: $(LIMINE_DOWNLOAD)
-	@make -C limine
+	@$(MAKE) -C limine
 
 .PHONY: sys
 sys: libc
-	@make -C sys
+	@$(MAKE) -C sys
 
 $(RUN):
 	@mkdir -v run
@@ -26,8 +26,8 @@ $(OVMF): $(RUN)
 
 .PHONY: libc
 libc:
-	@make -C libc
-	@make -C libc efi
+	@$(MAKE) -C libc
+	@$(MAKE) -C libc efi
 
 .PHONY: image
 image: all 
@@ -61,5 +61,5 @@ gdb:
 .PHONY: clean
 clean:
 	@rm -rfv run image.iso mnt limine
-	@make -C libc clean
-	@make -C sys clean
+	@$(MAKE) -C libc clean
+	@$(MAKE) -C sys clean
