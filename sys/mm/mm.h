@@ -29,7 +29,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <tags.h>
+#include <limine.h>
 
 /* Size of a page, on x86 it's 4KiB. */
 #define PAGE_SIZE 0x1000
@@ -38,7 +38,7 @@
 #define MAX_LEVEL 7
 #define MAX_BLOCK MIN_BLOCK * (1 << MAX_LEVEL)
 
-void mm_init(struct hydra_memmap *memmap, size_t count);
+void mm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t offset);
 void mm_free_range(void *start, size_t size);
 void mm_free(void *addr, uint8_t level);
 void *mm_alloc_block(uint8_t level);

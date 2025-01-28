@@ -53,6 +53,12 @@ void idt_init(void)
 
 	idt_encode_entry(&IDT[0], (uint64_t)int_division_by_zero, 0x08, 0x8e);
 	idt_encode_entry(&IDT[3], (uint64_t)int_breakpoint, 0x08, 0x8e);
+	idt_encode_entry(&IDT[4], (uint64_t)int_overflow, 0x08, 0x8e);
+	idt_encode_entry(&IDT[6], (uint64_t)int_bad_opcode, 0x08, 0x8e);
+	idt_encode_entry(&IDT[8], (uint64_t)int_double_fault, 0x08, 0x8e);
+	idt_encode_entry(&IDT[10], (uint64_t)int_invalid_tss, 0x08, 0x8e);
+	idt_encode_entry(&IDT[11], (uint64_t)int_no_segment, 0x08, 0x8e);
+	idt_encode_entry(&IDT[12], (uint64_t)int_stack_segment, 0x08, 0x8e);
 	idt_encode_entry(&IDT[13], (uint64_t)int_gpf, 0x08, 0x8e);
 	idt_encode_entry(&IDT[14], (uint64_t)int_page_fault, 0x08, 0x8e);
 	idt_encode_entry(&IDT[32], (uint64_t)int_systimer, 0x08, 0x8e);

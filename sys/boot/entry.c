@@ -24,33 +24,62 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#include <tags.h>
 #include <log/fb.h>
 #include <mm/mm.h>
+#include <vm/vm.h>
 #include <x86_64/gdt.h>
 #include <x86_64/idt.h>
+#include <limine.h>
 
-__attribute__((used, section(".hydra_tags")))
-static volatile struct hydra_tag_memmap memmap = {
-	.type = HYDRA_TAG_MEMMAP_TYPE
+__attribute__((used, section(".limine_requests")))
+static volatile LIMINE_BASE_REVISION(3);
+
+__attribute__((used, section(".limine_requests")))
+static volatile struct limine_framebuffer_request framebuffer_request = {
+    .id = LIMINE_FRAMEBUFFER_REQUEST,
+    .revision = 0
 };
 
-__attribute__((used, section(".hydra_tags")))
-static volatile struct hydra_tag_framebuffer fbs = {
-	.type = HYDRA_TAG_FRAMEBUFFER_TYPE
+__attribute__((used, section(".limine_requests")))
+static volatile struct limine_memmap_request memmap_request = {
+    .id = LIMINE_MEMMAP_REQUEST,
+    .revision = 0
 };
+
+__attribute__((used, section(".limine_requests")))
+static volatile struct limine_hhdm_request hhdm_request = {
+    .id = LIMINE_HHDM_REQUEST,
+    .revision = 0
+};
+
+__attribute__((used, section(".limine_requests_start")))
+static volatile LIMINE_REQUESTS_START_MARKER;
+
+__attribute__((used, section(".limine_requests_end")))
+static volatile LIMINE_REQUESTS_END_MARKER;
+
+static inline void __native_flush_tlb_single(unsigned long addr) {
+   __asm__ volatile("invlpg (%0)" ::"r" (addr) : "memory");
+}
 
 void _start(void)
 {
-	hydra_framebuffer_t fb = fbs.framebuffers[0];
-	fb_init(fb.width, fb.height, fb.address);
-
+	struct limine_framebuffer *fb = framebuffer_request.response->framebuffers[0];
+	fb_init(fb->width, fb->height, fb->address);
+	
 	gdt_init();
 	kprintf("Global Descriptor Table initialized.\n", 0x100);
 	idt_init();
 	kprintf("Interrupt Descriptor Table initialized.\n", 0x100);
-	mm_init(memmap.memmap, memmap.memmap_count);
+	
+	mm_init(memmap_request.response->entries, memmap_request.response->entry_count, hhdm_request.response->offset);
 	kprintf("Memory manager initialized.\n");
+	vm_init(memmap_request.response->entries, memmap_request.response->entry_count, hhdm_request.response->offset);
+	kprintf("Paging initialized.\n");
+
+	//vm_kmmap(0x10000000, fb->address, PAGE_PRESENT | PAGE_WRITABLE);
+	//fb_init(fb->width, fb->height, 0x10000000);
+	//kprintf("test\n");
 	
 	while(1);
 }

@@ -24,43 +24,34 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#ifndef TAGS_H
-#define TAGS_H
+#ifndef VM_H
+#define VM_H
 
 #include <stdint.h>
 #include <stddef.h>
+#include <limine.h>
 
-// Hydra tags
+#define PAGE_ADDR_MASK 0x000ffffffffff000
 
-#define HYDRA_MEMMAP_FREE 0x1
-#define HYDRA_MEMMAP_KERNEL 0x2
-#define HYDRA_MEMMAP_SERVICE 0x3
-#define HYDRA_MEMMAP_RESERVED 0x4
+#define PAGE_PRESENT 0x1
+#define PAGE_WRITABLE 0x1 << 1
+#define PAGE_USER 0x1 << 2
+#define PAGE_ENTRY(address, flags) ((address & PAGE_ADDR_MASK) | flags)
 
-typedef struct hydra_framebuffer {
-	uint32_t *address;
-	uint64_t size;
-	uint64_t width, height;
-} hydra_framebuffer_t;
+/* These are tables that represent the various levels of the
+ * linear address translation done by the MMU.
+ * Each table contains 512 entries, occupying exactly 1 page.
+ */
+typedef uint64_t *pml4_t;
+typedef uint64_t *pdpt_t;
+typedef uint64_t *pd_t;
+typedef uint64_t *pt_t;
 
+extern void pt_load(uint64_t pml4);
 
-struct hydra_memmap {
-	uint64_t phys_start, virt_start;
-	uint64_t pages;
-	uint8_t type;
-};
-
-#define HYDRA_TAG_MEMMAP_TYPE 0x1
-struct hydra_tag_memmap {
-	uint8_t type;
-	uint64_t memmap_count;
-	struct hydra_memmap *memmap;
-} __attribute__((packed));
-
-#define HYDRA_TAG_FRAMEBUFFER_TYPE 0x2
-struct hydra_tag_framebuffer {
-	uint8_t type;
-	hydra_framebuffer_t *framebuffers;
-} __attribute__((packed));
+void vm_mmap(pml4_t pml4, void *virtual, void *physical, uint8_t flags);
+void vm_kmmap(void *virtual, void *physical, uint8_t flags);
+void vm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t offset);
+void *vm_get_phys(pml4_t pml4, void *virtual);
 
 #endif

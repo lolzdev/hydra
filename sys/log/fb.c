@@ -98,9 +98,9 @@ void kputs(const char *s)
 	}
 }
 
-static char *convert(unsigned int num, int base)
+static char *convert(uint64_t num, int base)
 {
-    static char representation[]= "0123456789ABCDEF";
+    static char representation[]= "0123456789abcdef";
     static char buffer[50];
     char *ptr;
 

@@ -54,8 +54,64 @@ void int_page_fault(struct interrupt_frame *frame, uint64_t error)
 __attribute__((interrupt))
 void int_gpf(struct interrupt_frame *frame)
 {
-	while(1);
 	kprintf("panic: general protection fault at: 0x%x\n", frame->ip);
+	while(1);
+}
+
+__attribute__((interrupt))
+void int_overflow(struct interrupt_frame *frame)
+{
+	kprintf("panic: overflow at: 0x%x\n", frame->ip);
+	while(1);
+}
+
+__attribute__((interrupt))
+void int_bad_opcode(struct interrupt_frame *frame)
+{
+	kprintf("panic: invalid opcode at: 0x%x\n", frame->ip);
+	while(1);
+}
+
+__attribute__((interrupt))
+void int_double_fault(struct interrupt_frame *frame)
+{
+	kprintf("panic: double fault at: 0x%x\n", frame->ip);
+	while(1);
+}
+
+__attribute__((interrupt))
+void int_invalid_tss(struct interrupt_frame *frame)
+{
+	kprintf("panic: double fault at: 0x%x\n", frame->ip);
+	while(1);
+}
+
+__attribute__((interrupt))
+void int_no_segment(struct interrupt_frame *frame)
+{
+	kprintf("panic: segment not present at: 0x%x\n", frame->ip);
+	while(1);
+}
+
+__attribute__((interrupt))
+void int_stack_segment(struct interrupt_frame *frame)
+{
+	kprintf("panic: stack segment fault at: 0x%x\n", frame->ip);
+	while(1);
+}
+
+__attribute__((interrupt))
+void int_virtualization(struct interrupt_frame *frame)
+{
+	kprintf("panic: virtualization exception at: 0x%x\n", frame->ip);
+	while(1);
+}
+
+__attribute__((interrupt))
+void int_security(struct interrupt_frame *frame)
+{
+	kprintf("panic: security exception at: 0x%x\n", frame->ip);
+	while(1);
 }
 
 __attribute__((interrupt))

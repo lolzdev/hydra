@@ -3,7 +3,7 @@ include sources.mk
 CC:=clang
 LD:=ld.lld
 
-CFLAGS:=-I../libc/include -I../loader/include -I. -g
+CFLAGS:=-I../libc/include -I../loader/include -I. -gdwarf-2
 CFLAGS+=-O0 -Wall -Wextra -g -ffreestanding \
 		 -Wno-instantiation-after-specialization \
 		 -Wno-int-conversion \
@@ -12,15 +12,17 @@ CFLAGS+=-O0 -Wall -Wextra -g -ffreestanding \
 		 -fno-stack-check \
 		 -fno-omit-frame-pointer \
 		 -fno-lto \
+		 -fno-pie \
+         -fno-builtin \
+		 -fno-PIC \
+		 -mcmodel=kernel \
 		 -m64 \
          -march=x86-64 \
 		 -mabi=sysv \
 		 -mno-80387 \
 		 -mno-mmx \
 		 -mno-red-zone \
-		 -fno-pie \
 		 --target=x86_64-pc-none-elf \
-         -fno-builtin \
 		 -mno-sse \
 		 -mno-sse2 \
 		 -mno-avx \

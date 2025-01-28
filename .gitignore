@@ -3,4 +3,6 @@
 **/*.o
 **/*.o.efi
 **/*.img
+**/*.iso
+limine/
 run/

@@ -36,38 +36,59 @@ struct block {
 };
 
 static size_t mem_size = 0x0;
-static struct hydra_memmap *MMAP;
-static size_t MMAP_SIZE;
 static struct block *freelist[MAX_LEVEL+1];
 
-void mm_init(struct hydra_memmap *memmap, size_t count)
+void mm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t offset)
 {
-	MMAP = memmap;
-	MMAP_SIZE = count;
-	for (size_t i=0; i < count; i++) {
-		struct hydra_memmap map = memmap[i];
-		size_t size = map.pages * PAGE_SIZE;
-		size_t end = map.phys_start + size;
+	kprintf("offset: %x\n", offset);
+	size_t total_free = 0;
+	size_t max_size = 0;
+	size_t max_base = 0;
+	for (size_t i=0; i < entry_count; i++) {
+		struct limine_memmap_entry *map = memmap[i];
+		size_t size = map->length;
+		size_t end = (map->base + offset) + size;
+		//kprintf("region: %x - %x, %x\n", map->base, end, map->type);
 		if (end > mem_size) { 
 			mem_size = end;
 		}
 
-		if (map.phys_start != 0x0 && map.type == HYDRA_MEMMAP_FREE) {
-			mm_free_range((void *) map.phys_start, size);
+		if (size > max_size && map->type == LIMINE_MEMMAP_USABLE) {
+			max_size = size;
+			max_base = map->base + offset;
 		}
+
+		/*
+		if (map->type == LIMINE_MEMMAP_USABLE && map->base > 0) {
+			total_free += size;
+			if (size >= LEVEL_SIZE(MAX_LEVEL))
+				kprintf("culo\n");
+		}*/
 	}
+	kprintf("max area: %x - %x\n", max_base, max_base + max_size);
+	mm_free_range((void *) max_base, max_size);
 }
 
 void mm_free_range(void *start, size_t size)
 {
-	struct block *prev = mm_create_block((size_t) start, MAX_LEVEL);
+	uint8_t level = 0;
+	while (size > LEVEL_SIZE(level)) {
+		level++;
+	}
+
+	if (level > MAX_LEVEL) level = MAX_LEVEL;
+	struct block *prev = mm_create_block((size_t) start, level);
 	freelist[MAX_LEVEL] = prev;
-	for (size_t i = (size_t) start + LEVEL_SIZE(MAX_LEVEL); i < (size_t) start + size; i += LEVEL_SIZE(MAX_LEVEL)) {
+	
+	size_t count =0;
+	for (size_t i = (size_t) start + LEVEL_SIZE(level); i < (size_t) start + size; i += LEVEL_SIZE(level)) {
 		if (i >= (size_t) start + size) break;
-		struct block *block = mm_create_block(i, MAX_LEVEL);
+		struct block *block = mm_create_block(i, level);
 		prev->next = block;
 		prev = block;
+		count++;
 	}
+	kprintf("created %d new blocks\n", count);
 }
 
 struct block *mm_create_block(size_t addr, uint8_t level)
@@ -170,7 +191,7 @@ void *mm_alloc_block(uint8_t level) {
 	}
 
 	if (b == NULL) {
-		return 0x0;
+		return 0xcafebabe;
 	}
 
 	while (b->level > level) {
