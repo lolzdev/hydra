@@ -66,12 +66,10 @@ void _start(void)
 {
 	struct limine_framebuffer *fb = framebuffer_request.response->framebuffers[0];
 	fb_init(fb->width, fb->height, fb->address);
-	
 	gdt_init();
 	kprintf("Global Descriptor Table initialized.\n", 0x100);
 	idt_init();
 	kprintf("Interrupt Descriptor Table initialized.\n", 0x100);
-	
 	mm_init(memmap_request.response->entries, memmap_request.response->entry_count, hhdm_request.response->offset);
 	kprintf("Memory manager initialized.\n");
 	vm_init(memmap_request.response->entries, memmap_request.response->entry_count, hhdm_request.response->offset);

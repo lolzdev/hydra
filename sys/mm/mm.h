@@ -34,7 +34,8 @@
 /* Size of a page, on x86 it's 4KiB. */
 #define PAGE_SIZE 0x1000
 
-#define MIN_BLOCK 0x1000
+/* Minimum size of a block (a page) */
+#define MIN_BLOCK PAGE_SIZE
 #define MAX_LEVEL 7
 #define MAX_BLOCK MIN_BLOCK * (1 << MAX_LEVEL)
 

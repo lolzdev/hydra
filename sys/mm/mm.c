@@ -57,13 +57,7 @@ void mm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t
 			max_size = size;
 			max_base = map->base + offset;
 		}
-
-		/*
-		if (map->type == LIMINE_MEMMAP_USABLE && map->base > 0) {
-			total_free += size;
-		}*/
 	}
-	kprintf("max area: %x - %x\n", max_base, max_base + max_size);
 	mm_free_range((void *) max_base, max_size);
 }
 
@@ -76,7 +70,7 @@ void mm_free_range(void *start, size_t size)
 
 	if (level > MAX_LEVEL) level = MAX_LEVEL;
 	struct block *prev = mm_create_block((size_t) start, level);
-	freelist[MAX_LEVEL] = prev;
+	freelist[level] = prev;
 	
 	size_t count =0;
 	for (size_t i = (size_t) start + LEVEL_SIZE(level); i < (size_t) start + size; i += LEVEL_SIZE(level)) {
@@ -86,7 +80,6 @@ void mm_free_range(void *start, size_t size)
 		prev = block;
 		count++;
 	}
-	kprintf("created %d new blocks\n", count);
 }
 
 struct block *mm_create_block(size_t addr, uint8_t level)
