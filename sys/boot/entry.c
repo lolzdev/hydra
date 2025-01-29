@@ -76,10 +76,6 @@ void _start(void)
 	kprintf("Memory manager initialized.\n");
 	vm_init(memmap_request.response->entries, memmap_request.response->entry_count, hhdm_request.response->offset);
 	kprintf("Paging initialized.\n");
-
-	//vm_kmmap(0x10000000, fb->address, PAGE_PRESENT | PAGE_WRITABLE);
-	//fb_init(fb->width, fb->height, 0x10000000);
-	//kprintf("test\n");
 	
 	while(1);
 }

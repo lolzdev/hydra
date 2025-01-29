@@ -68,6 +68,8 @@ void fb_kputchar_at(uint32_t x, uint32_t y, char c )
 
 void fb_kputchar(char c)
 {
+	if (row >= fb_height) row = 0;
+	if (column >= fb_width) column = 0;
 	if (c == '\n') {
 		if (row > char_height) {
 			row = 0;

@@ -4,5 +4,6 @@
 **/*.o.efi
 **/*.img
 **/*.iso
+**/*.log
 limine/
 run/
