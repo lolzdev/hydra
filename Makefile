@@ -33,6 +33,7 @@ libc:
 image: all 
 	@mkdir -p iso_root/boot; \
 	cp sys/hydra iso_root/boot/; \
+	cp tests/test iso_root/boot/; \
 	mkdir -p iso_root/boot/limine; \
 	cp -v limine.conf limine/limine-bios.sys limine/limine-bios-cd.bin limine/limine-uefi-cd.bin iso_root/boot/limine/; \
 	mkdir -p iso_root/EFI/BOOT; \

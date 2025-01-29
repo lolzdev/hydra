@@ -40,7 +40,6 @@ static struct block *freelist[MAX_LEVEL+1];
 
 void mm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t offset)
 {
-	kprintf("offset: %x\n", offset);
 	size_t total_free = 0;
 	size_t max_size = 0;
 	size_t max_base = 0;
@@ -48,7 +47,6 @@ void mm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t
 		struct limine_memmap_entry *map = memmap[i];
 		size_t size = map->length;
 		size_t end = (map->base + offset) + size;
-		//kprintf("region: %x - %x, %x\n", map->base, end, map->type);
 		if (end > mem_size) { 
 			mem_size = end;
 		}

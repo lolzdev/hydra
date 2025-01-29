@@ -31,7 +31,7 @@
 #include <stddef.h>
 
 typedef uint64_t gdt_entry;
-typedef uint64_t gdt_t[3];
+typedef uint64_t gdt_t[5];
 typedef struct {
 	uint16_t limit;
 	uint64_t base;

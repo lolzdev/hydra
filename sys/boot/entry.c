@@ -1,5 +1,5 @@
 	/*-
-	 * Copyright 2024 Lorenzo Torres
+	 * Copyright 2025 Lorenzo Torres
  	 *
 	 * Redistribution and use in source and binary forms, with or without
 	 * modification, are permitted provided that the following conditions are met:
@@ -29,6 +29,8 @@
 #include <vm/vm.h>
 #include <x86_64/gdt.h>
 #include <x86_64/idt.h>
+#include <x86_64/usr.h>
+#include <x86_64/syscall.h>
 #include <limine.h>
 
 __attribute__((used, section(".limine_requests")))
@@ -52,14 +54,21 @@ static volatile struct limine_hhdm_request hhdm_request = {
     .revision = 0
 };
 
+__attribute__((used, section(".limine_requests")))
+static volatile struct limine_module_request module_request = {
+    .id = LIMINE_MODULE_REQUEST,
+    .revision = 0
+};
+
 __attribute__((used, section(".limine_requests_start")))
 static volatile LIMINE_REQUESTS_START_MARKER;
 
 __attribute__((used, section(".limine_requests_end")))
 static volatile LIMINE_REQUESTS_END_MARKER;
 
-static inline void __native_flush_tlb_single(unsigned long addr) {
-   __asm__ volatile("invlpg (%0)" ::"r" (addr) : "memory");
+extern void user_function(void)
+{
+	while(1);
 }
 
 void _start(void)
@@ -74,6 +83,8 @@ void _start(void)
 	kprintf("Memory manager initialized.\n");
 	vm_init(memmap_request.response->entries, memmap_request.response->entry_count, hhdm_request.response->offset);
 	kprintf("Paging initialized.\n");
+	syscall_init();
+	usr_init(module_request.response->modules, module_request.response->module_count);
 	
 	while(1);
 }
