@@ -55,10 +55,69 @@ typedef struct madt_table {
 	struct acpi_sdt_header header;
 	uint32_t lapic_address;
 	uint32_t flags;
+	uint8_t entries;
 } __attribute__((packed)) madt_table_t;
 
+typedef struct apic_entry_header {
+	uint8_t entry_type;
+	uint8_t record_length;
+} __attribute__((packed)) apic_entry_header_t;
+
+typedef struct apic_entry_local {
+	uint8_t cpu_id;
+	uint8_t id;
+	uint32_t flags;
+} __attribute__((packed)) apic_entry_local_t;
+
+typedef struct apic_entry_io {
+	uint8_t id;
+	uint8_t reserved;
+	uint32_t address;
+	uint32_t gsi_base;
+} __attribute__((packed)) apic_entry_io_t;
+
+typedef struct apic_entry_io_iso {
+	uint8_t bus_source;
+	uint8_t irq_source;
+	uint32_t gsi;
+	uint16_t flags;
+} __attribute__((packed)) apic_entry_io_iso_t;
+
+typedef struct apic_entry_nmi {
+	uint8_t cpu_id;
+	uint16_t flags;
+	uint8_t lint;
+} __attribute__((packed)) apic_entry_nmi_t;
+
+typedef struct apic_entry_nmi_source {
+	uint8_t nmi_source;
+	uint8_t reserved;
+	uint16_t flags;
+	uint32_t gsi;
+} __attribute__((packed)) apic_entry_nmi_source_t;
+
+typedef struct apic_entry_addr_override {
+	uint16_t reserved;
+	uint64_t address;
+} __attribute__((packed)) apic_entry_addr_override_t;
+
+typedef struct apic_entry_x2apic {
+	uint16_t reserved;
+	uint32_t id;
+	uint32_t flags;
+	uint32_t acpi_id;
+} __attribute__((packed)) apic_entry_x2apic_t;
+
+/* Write to a 32 bits long IOAPIC register */
+void apic_io_write32(uint32_t reg, uint32_t value);
+/* Write to a 64 bits long IOAPIC register */
+void apic_io_write(uint32_t reg, uint64_t value);
+/* Read from a 32 bits long IOAPIC register */
+uint32_t apic_io_read32(uint32_t reg);
+/* Read from a 32 bits long IOAPIC register */
+uint64_t apic_io_read(uint32_t reg);
 void apic_init(void);
-void apic_set_base(uintptr_t base);
-uintptr_t apic_get_base(void);
+void apic_parse_madt(void);
+void apic_io_map(uint8_t irq, uint8_t vector);
 
 #endif

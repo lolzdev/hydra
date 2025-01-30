@@ -43,7 +43,7 @@ typedef struct hpet_table {
 	uint8_t comparator_count:5;
 	uint8_t counter_size:1;
 	uint8_t reserved:1;
-	uint6_t legacy_replacement:1;
+	uint8_t legacy_replacement:1;
 	uint16_t pci_vendor_id;
 	struct hpet_address address;
 	uint8_t hpet_number;
@@ -88,5 +88,7 @@ struct hpet_tmr_conf_cap {
 	uint8_t int_type:1;
 	uint8_t reserved2:1;
 } __attribute__((packed));
+
+void hpet_init(void);
 
 #endif

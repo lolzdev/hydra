@@ -34,6 +34,7 @@
 #include <x86_64/syscall.h>
 #include <x86_64/acpi.h>
 #include <x86_64/apic.h>
+#include <x86_64/hpet.h>
 #include <limine.h>
 
 __attribute__((used, section(".limine_requests")))
@@ -91,6 +92,8 @@ void _start(void)
 	kprintf("ACPI initialized.\n");
 	apic_init();
 	kprintf("APIC initialized.\n");
+	hpet_init();
+	kprintf("HPET initialized.\n");
 	//syscall_init();
 	//usr_init(module_request.response->modules, module_request.response->module_count);
 	

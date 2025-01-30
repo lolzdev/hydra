@@ -25,3 +25,11 @@
 	 */
 
 #include <x86_64/hpet.h>
+#include <log/fb.h>
+
+void hpet_init(void)
+{
+	hpet_table_t *hpet_table = acpi_find_sdt("HPET");
+
+	kprintf("%x\n", hpet_table);
+}

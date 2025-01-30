@@ -43,18 +43,13 @@ static uint32_t *SDT_LIST;
 void acpi_init(void)
 {
 	uint32_t phys = rsdp_request.response->address;
-	kprintf("%x -> %x\n", phys, vm_get_kvirt(phys));
 	acpi_rsdp_t *rsdp = mm_alloc(sizeof(acpi_rsdp_t));
 	vm_kmmap(rsdp, (size_t)phys & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE);
 	vm_reload();
 
 	phys = rsdp->rsdt_address;
-	kprintf("%x -> %x\n", phys, (size_t) vm_get_kvirt(phys) & ~0xfff);
 	RSDT = ((size_t)vm_get_kvirt(phys) & ~0xfff) + ((size_t)phys % 0x1000);
-	kprintf("rsdt: %x, %c\n", RSDT, RSDT->header.signature[0]);
-
 	SDT_LIST = (uint32_t *)((size_t)RSDT + sizeof(struct acpi_sdt_header));
-	kprintf("sdt_list: %x\n", SDT_LIST);
 }
 
 void *acpi_find_sdt(char signature[4])

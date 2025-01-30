@@ -55,8 +55,6 @@ void vm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t
 		size_t size = map->length;
 		size_t end = (map->base + offset) + size;
 
-		if (map->type == 2 || map->type == 3)
-			kprintf("acpi\n");
 		for (size_t i=0; i < size / 0x1000; i++) {
 			size_t virt = ((map->base + offset) & ~(0xfff)) + (i*0x1000);
 			if (map->type == 0x6 && map->base == executable_request.response->physical_base) {
