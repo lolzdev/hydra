@@ -30,6 +30,7 @@
 #include <x86_64/gdt.h>
 #include <x86_64/idt.h>
 #include <x86_64/usr.h>
+#include <x86_64/pit.h>
 #include <x86_64/syscall.h>
 #include <limine.h>
 

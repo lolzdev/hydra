@@ -24,34 +24,70 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#include <x86_64/syscall.h>
-
-#include <stdint.h>
-#include <log/fb.h>
+#include <x86_64/pit.h>
 #include <x86_64/inst.h>
+#include <log/fb.h>
 
-#define IA32_STAR   0xC0000081
-#define IA32_LSTAR  0xC0000082
-#define IA32_FMASK  0xC0000084
+static uint64_t sleep_ticks;
 
-extern void syscall_entry(void);
-
-extern uint64_t syscall_handler(uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5, uint64_t arg6)
+__attribute__((interrupt))
+void int_pit(struct interrupt_frame *frame)
 {
-	uint64_t id;
-	__asm__("movq %%rax,%0" : "=r"(id));
-
-	switch (id) {
-		case 0x1:
-			char *str = (char *) arg1;
-			kprintf(str);
-	}
-
-	return 0;
+	sleep_ticks--;
+	__outb(0x20, 0x20);
 }
 
-void syscall_init() {
-	__wrmsr(IA32_STAR, 0x0013000800000000);
-    __wrmsr(IA32_LSTAR, (uint64_t)syscall_entry);
-    __wrmsr(IA32_FMASK, 0xFFFFFFFFFFFFFFFD);
+uint32_t pit_get(void) {
+	uint32_t count = 0;
+	
+	__cli();
+	
+	__outb(0x43,0b0000000);
+	
+	count = __inb(0x40);
+	count |= __inb(0x40) << 8;
+	
+	return count;
+}
+
+void pit_set(uint32_t count)
+{
+	__cli();
+
+	__outb(0x40,count & 0xff);
+	__outb(0x40,(count & 0xff00) >> 8);
+}
+
+void pit_set_frequency(uint64_t ms) {
+    uint16_t divisor = PIT_FREQUENCY / (ms * 1000);
+
+    __outb(PIT_COMMAND_PORT, 0x36);
+    __outb(PIT_CHANNEL_0, divisor & 0xFF);
+    __outb(PIT_CHANNEL_0, (divisor >> 8) & 0xFF);
+}
+
+void pit_disable(void) {
+    uint8_t mask = __inb(0x21);
+    mask |= 0x1; // disable PIT
+    __outb(0x21, mask);
+}
+
+void pit_enable(void) {
+    uint8_t mask = __inb(0x21);
+    mask &= ~0x1; // disable PIT
+    __outb(0x21, mask);
+}
+
+void pit_sleep(uint64_t ms)
+{
+	pit_enable();
+	__cli();
+	sleep_ticks = ms;
+	pit_set_frequency(1);
+	__sti();
+
+	while (sleep_ticks > 0) {
+		__asm__ volatile("hlt");
+	}
+	pit_disable();
 }

@@ -24,34 +24,46 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#include <x86_64/syscall.h>
+#ifndef INST_H
+#define INST_H
 
 #include <stdint.h>
-#include <log/fb.h>
-#include <x86_64/inst.h>
 
-#define IA32_STAR   0xC0000081
-#define IA32_LSTAR  0xC0000082
-#define IA32_FMASK  0xC0000084
+static inline void __wrmsr(uint32_t msr, uint64_t value) {
+    uint32_t low = value & 0xffffffff;
+    uint32_t high = value >> 32;
 
-extern void syscall_entry(void);
+    __asm__ volatile ("wrmsr":: "c"(msr), "a"(low), "d"(high));
+}
 
-extern uint64_t syscall_handler(uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5, uint64_t arg6)
+static inline uint64_t __rdmsr(uint32_t msr)
 {
-	uint64_t id;
-	__asm__("movq %%rax,%0" : "=r"(id));
-
-	switch (id) {
-		case 0x1:
-			char *str = (char *) arg1;
-			kprintf(str);
-	}
-
-	return 0;
+	uint32_t low;
+	uint32_t high;
+	__asm__ volatile("rdmsr" : "=a"(low), "=d"(high) : "c"(msr));
+	return ((uint64_t)high << 32) | (uint64_t)low;
 }
 
-void syscall_init() {
-	__wrmsr(IA32_STAR, 0x0013000800000000);
-    __wrmsr(IA32_LSTAR, (uint64_t)syscall_entry);
-    __wrmsr(IA32_FMASK, 0xFFFFFFFFFFFFFFFD);
+static inline void __outb(uint16_t port, uint8_t val)
+{
+    __asm__ volatile ( "outb %b0, %w1" : : "a"(val), "Nd"(port) : "memory");
 }
+
+static inline uint8_t __inb(uint16_t port)
+{
+    uint8_t ret;
+    __asm__ volatile ("inb %w1, %b0" : "=a"(ret) : "Nd"(port) : "memory");
+    return ret;
+}
+
+static inline void __cli(void)
+{
+	__asm__ volatile("cli");
+}
+
+static inline void __sti(void)
+{
+	__asm__ volatile("sti");
+}
+
+#endif

@@ -26,6 +26,8 @@
 
 #include <x86_64/idt.h>
 #include <x86_64/trap.h>
+#include <x86_64/pit.h>
+#include <x86_64/inst.h>
 
 __attribute__((aligned(0x10)))
 static idt_entry_t IDT[256];
@@ -42,8 +44,28 @@ void idt_encode_entry(idt_entry_t *entry, uint64_t isr, uint16_t selector, uint8
 	entry->zero = 0x0;
 }
 
+
+void pic_remap() {
+    __outb(PIC1_COMMAND, 0x11);
+    __outb(PIC2_COMMAND, 0x11);
+    
+    __outb(PIC1_DATA, 0x20);
+    __outb(PIC2_DATA, 0x28);
+    
+    __outb(PIC1_DATA, 0x04);
+    __outb(PIC2_DATA, 0x02);
+
+    __outb(PIC1_DATA, 0x01);
+    __outb(PIC2_DATA, 0x01);
+
+    __outb(PIC1_DATA, 0xFE);
+    __outb(PIC2_DATA, 0xFF);
+}
+
 void idt_init(void)
 {
+	pic_remap();
+
 	IDTR.base = (uintptr_t) &IDT[0];
 	IDTR.limit = ((uint16_t) sizeof(idt_entry_t) * 256) - 1;
 
@@ -61,7 +83,7 @@ void idt_init(void)
 	idt_encode_entry(&IDT[12], (uint64_t)int_stack_segment, 0x08, 0x8e);
 	idt_encode_entry(&IDT[13], (uint64_t)int_gpf, 0x08, 0x8e);
 	idt_encode_entry(&IDT[14], (uint64_t)int_page_fault, 0x08, 0x8e);
-	idt_encode_entry(&IDT[32], (uint64_t)int_systimer, 0x08, 0x8e);
+	idt_encode_entry(&IDT[32], (uint64_t)int_pit, 0x08, 0x8e);
 	idt_encode_entry(&IDT[33], (uint64_t)int_keyboard, 0x08, 0x8e);
 
 	__asm__ volatile ("lidt %0" : : "m"(IDTR));

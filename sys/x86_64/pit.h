@@ -24,34 +24,21 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#include <x86_64/syscall.h>
+#ifndef PIT_H
+#define PIT_H
 
 #include <stdint.h>
-#include <log/fb.h>
-#include <x86_64/inst.h>
+#include <x86_64/trap.h>
 
-#define IA32_STAR   0xC0000081
-#define IA32_LSTAR  0xC0000082
-#define IA32_FMASK  0xC0000084
+#define PIT_COMMAND_PORT 0x43
+#define PIT_CHANNEL_0 0x40
+#define PIT_FREQUENCY 1193182
 
-extern void syscall_entry(void);
+void int_pit(struct interrupt_frame *frame);
+uint32_t pit_get(void);
+void pit_set(uint32_t count);
+void pit_sleep(uint64_t ms);
+void pit_disable(void);
+void pit_enable(void);
 
-extern uint64_t syscall_handler(uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5, uint64_t arg6)
-{
-	uint64_t id;
-	__asm__("movq %%rax,%0" : "=r"(id));
-
-	switch (id) {
-		case 0x1:
-			char *str = (char *) arg1;
-			kprintf(str);
-	}
-
-	return 0;
-}
-
-void syscall_init() {
-	__wrmsr(IA32_STAR, 0x0013000800000000);
-    __wrmsr(IA32_LSTAR, (uint64_t)syscall_entry);
-    __wrmsr(IA32_FMASK, 0xFFFFFFFFFFFFFFFD);
-}
+#endif
