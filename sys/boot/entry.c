@@ -32,6 +32,8 @@
 #include <x86_64/usr.h>
 #include <x86_64/pit.h>
 #include <x86_64/syscall.h>
+#include <x86_64/acpi.h>
+#include <x86_64/apic.h>
 #include <limine.h>
 
 __attribute__((used, section(".limine_requests")))
@@ -74,6 +76,7 @@ extern void user_function(void)
 
 void _start(void)
 {
+	pit_disable();
 	struct limine_framebuffer *fb = framebuffer_request.response->framebuffers[0];
 	fb_init(fb->width, fb->height, fb->address);
 	gdt_init();
@@ -84,8 +87,12 @@ void _start(void)
 	kprintf("Memory manager initialized.\n");
 	vm_init(memmap_request.response->entries, memmap_request.response->entry_count, hhdm_request.response->offset);
 	kprintf("Paging initialized.\n");
-	syscall_init();
-	usr_init(module_request.response->modules, module_request.response->module_count);
+	acpi_init();
+	kprintf("ACPI initialized.\n");
+	apic_init();
+	kprintf("APIC initialized.\n");
+	//syscall_init();
+	//usr_init(module_request.response->modules, module_request.response->module_count);
 	
 	while(1);
 }

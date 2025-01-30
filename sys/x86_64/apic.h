@@ -27,4 +27,38 @@
 #ifndef APIC_H
 #define APIC_H
 
+#include <stdint.h>
+#include <stddef.h>
+#include <x86_64/acpi.h>
+
+#define IA32_APIC_BASE_MSR 0x1B
+#define IA32_APIC_BASE_MSR_BSP 0x100
+#define IA32_APIC_BASE_MSR_ENABLE 0x800
+
+#define APIC_LAPIC_ID 0x20
+#define APIC_LAPIC_VERSION 0x30
+#define APIC_TPR 0x80
+#define APIC_APR 0x90
+#define APIC_PPR 0xa0
+#define APIC_EOI 0xb0
+#define APIC_RRD 0xc0
+#define APIC_LD  0xd0
+#define APIC_DF  0xe0
+#define APIC_SIV 0xf0
+#define APIC_IC  0x380
+#define APIC_CC  0x390
+#define APIC_TD  0x3E0
+
+#define APIC_LVT_TMR 0x320
+
+typedef struct madt_table {
+	struct acpi_sdt_header header;
+	uint32_t lapic_address;
+	uint32_t flags;
+} __attribute__((packed)) madt_table_t;
+
+void apic_init(void);
+void apic_set_base(uintptr_t base);
+uintptr_t apic_get_base(void);
+
 #endif

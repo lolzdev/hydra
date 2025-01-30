@@ -85,6 +85,7 @@ void idt_init(void)
 	idt_encode_entry(&IDT[14], (uint64_t)int_page_fault, 0x08, 0x8e);
 	idt_encode_entry(&IDT[32], (uint64_t)int_pit, 0x08, 0x8e);
 	idt_encode_entry(&IDT[33], (uint64_t)int_keyboard, 0x08, 0x8e);
+	idt_encode_entry(&IDT[39], (uint64_t)int_systimer, 0x08, 0x8e);
 
 	__asm__ volatile ("lidt %0" : : "m"(IDTR));
 	__asm__ volatile ("sti");

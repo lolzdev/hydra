@@ -1,5 +1,5 @@
 	/*-
-	 * Copyright 2025 Lorenzo Torres
+	 * Copyright 2024 Lorenzo Torres
  	 *
 	 * Redistribution and use in source and binary forms, with or without
 	 * modification, are permitted provided that the following conditions are met:
@@ -24,74 +24,38 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#include <x86_64/pit.h>
-#include <x86_64/inst.h>
-#include <log/fb.h>
+#ifndef ACPI_H
+#define ACPI_H
 
-static uint64_t sleep_ticks;
+#include <stddef.h>
+#include <stdint.h>
 
-__attribute__((interrupt))
-void int_pit(struct interrupt_frame *frame)
-{
-	sleep_ticks--;
-	kprintf("timer\n");
-	__outb(0x20, 0x20);
-}
+struct acpi_sdt_header {
+  char signature[4];
+  uint32_t length;
+  uint8_t revision;
+  uint8_t checksum;
+  char oem_id[6];
+  char oem_table_id[8];
+  uint32_t oem_revision;
+  uint32_t creator_id;
+  uint32_t creator_revision;
+} __attribute__((packed));
 
-uint32_t pit_get(void) {
-	uint32_t count = 0;
-	
-	__cli();
-	
-	__outb(0x43,0b0000000);
-	
-	count = __inb(0x40);
-	count |= __inb(0x40) << 8;
-	
-	return count;
-}
+typedef struct acpi_rsdp {
+ char signature[8];
+ uint8_t checksum;
+ char oem_id[6];
+ uint8_t revision;
+ uint32_t rsdt_address;
+} __attribute__ ((packed)) acpi_rsdp_t ;
 
-void pit_set(uint32_t count)
-{
-	__cli();
+typedef struct acpi_rsdt {
+	struct acpi_sdt_header header;
+	uint32_t *sdt_list;
+} __attribute__((packed)) acpi_rsdt_t;
 
-	__outb(0x40,count & 0xff);
-	__outb(0x40,(count & 0xff00) >> 8);
-}
+void acpi_init(void);
+void *acpi_find_sdt(char signature[4]);
 
-void pit_set_frequency(uint64_t ms) {
-    uint16_t divisor = PIT_FREQUENCY / (ms * 1000);
-
-    __outb(PIT_COMMAND_PORT, 0x36);
-    __outb(PIT_CHANNEL_0, divisor & 0xFF);
-    __outb(PIT_CHANNEL_0, (divisor >> 8) & 0xFF);
-}
-
-void pit_disable(void) {
-    uint8_t mask = __inb(0x21);
-    mask |= 0x1; // disable PIT
-    __outb(0x21, mask);
-	__outb(0x43, 0x30);
-	__outb(0x40, 0x0);
-	__outb(0x40, 0x0);
-}
-
-void pit_enable(void) {
-    uint8_t mask = __inb(0x21);
-    mask &= ~0x1; // disable PIT
-    __outb(0x21, mask);
-}
-
-void pit_sleep(uint64_t ms)
-{
-	pit_enable();
-	__cli();
-	sleep_ticks = ms;
-	pit_set_frequency(1);
-	__sti();
-
-	while (sleep_ticks > 0) {
-		__asm__ volatile("hlt");
-	}
-	pit_disable();
-}
+#endif

@@ -96,6 +96,8 @@ struct block *mm_buddy(struct block *block)
 
 uint8_t mm_is_free(struct block *block)
 {
+	if (!block) return 0;
+	if (block->level < 0 || block->level > MAX_LEVEL) return 0;
 	struct block *b = freelist[block->level];
 
 	while (b != NULL) {
@@ -146,7 +148,7 @@ uint8_t mm_merge(struct block *b)
 	return 0;
 }
 
-void mm_free(void *addr, uint8_t level)
+void mm_free_block(void *addr, uint8_t level)
 {
 	struct block *b = mm_create_block(addr, level);
 	
@@ -190,6 +192,14 @@ void *mm_alloc_block(uint8_t level) {
 	return (void *) b;
 }
 
+void mm_free_pages(void *addr, size_t size)
+{
+	uint8_t level = 0;
+	while ((size * PAGE_SIZE) > LEVEL_SIZE(level)) level++;
+
+	mm_free_block(addr, level);
+}
+
 void *mm_alloc_pages(size_t size)
 {
 	uint8_t level = 0;
@@ -201,6 +211,13 @@ void *mm_alloc_pages(size_t size)
 	if (level > MAX_LEVEL) return 0x0;
 
 	return mm_alloc_block(level);
+}
+
+void mm_free(void *addr, size_t size)
+{
+	size_t pages = size/PAGE_SIZE;
+	if (pages == 0) pages = 1;
+	mm_free_pages(addr, pages);
 }
 
 void *mm_alloc(size_t size)

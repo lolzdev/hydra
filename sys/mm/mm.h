@@ -41,7 +41,9 @@
 
 void mm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t offset);
 void mm_free_range(void *start, size_t size);
-void mm_free(void *addr, uint8_t level);
+void mm_free_block(void *addr, uint8_t level);
+void mm_free(void *addr, size_t size);
+void mm_free_pages(void *addr, size_t size);
 void *mm_alloc_block(uint8_t level);
 struct block *mm_buddy(struct block *block);
 uint8_t mm_buddy_is_free(struct block *block);

@@ -24,3 +24,17 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
+#include <x86_64/apic.h>
+#include <x86_64/inst.h>
+#include <x86_64/pit.h>
+#include <mm/mm.h>
+#include <vm/vm.h>
+#include <log/fb.h>
+
+static uint32_t *LAPIC_BASE;
+
+void apic_init(void)
+{
+	madt_table_t *madt = acpi_find_sdt("APIC");
+	kprintf("%x\n", madt);
+}

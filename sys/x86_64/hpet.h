@@ -1,5 +1,5 @@
 	/*-
-	 * Copyright 2025 Lorenzo Torres
+	 * Copyright 2024 Lorenzo Torres
  	 *
 	 * Redistribution and use in source and binary forms, with or without
 	 * modification, are permitted provided that the following conditions are met:
@@ -24,74 +24,69 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#include <x86_64/pit.h>
-#include <x86_64/inst.h>
-#include <log/fb.h>
+#ifndef HPET_H
+#define HPET_H
 
-static uint64_t sleep_ticks;
+#include <x86_64/acpi.h>
 
-__attribute__((interrupt))
-void int_pit(struct interrupt_frame *frame)
-{
-	sleep_ticks--;
-	kprintf("timer\n");
-	__outb(0x20, 0x20);
-}
+struct hpet_address {
+	uint8_t address_space_id;
+    uint8_t register_bit_width;
+    uint8_t register_bit_offset;
+    uint8_t reserved;
+    uint64_t address;
+} __attribute__((packed));
 
-uint32_t pit_get(void) {
-	uint32_t count = 0;
-	
-	__cli();
-	
-	__outb(0x43,0b0000000);
-	
-	count = __inb(0x40);
-	count |= __inb(0x40) << 8;
-	
-	return count;
-}
+typedef struct hpet_table {
+	struct acpi_sdt_header header;
+	uint8_t hw_rev_id;
+	uint8_t comparator_count:5;
+	uint8_t counter_size:1;
+	uint8_t reserved:1;
+	uint6_t legacy_replacement:1;
+	uint16_t pci_vendor_id;
+	struct hpet_address address;
+	uint8_t hpet_number;
+	uint16_t minimum_tick;
+	uint8_t page_protection;
+} __attribute__((packed)) hpet_table_t;
 
-void pit_set(uint32_t count)
-{
-	__cli();
+struct hpet_general_caps {
+	uint32_t counter_clk_period;
+	uint16_t vendor_id;
+	uint8_t legacy_cap:1;
+	uint8_t reserved:1;
+	uint8_t count_size_cap:1;
+	uint8_t timer_count:5;
+	uint8_t rev_id;
+} __attribute__((packed));
 
-	__outb(0x40,count & 0xff);
-	__outb(0x40,(count & 0xff00) >> 8);
-}
+struct hpet_general_config {
+	uint64_t reserved:62;
+	uint8_t legacy_enable:1;
+	uint8_t enable:1;
+} __attribute__((packed));
 
-void pit_set_frequency(uint64_t ms) {
-    uint16_t divisor = PIT_FREQUENCY / (ms * 1000);
+struct hpet_general_int_status {
+	uint32_t reserved;
+	uint32_t status;
+} __attribute__((packed));
 
-    __outb(PIT_COMMAND_PORT, 0x36);
-    __outb(PIT_CHANNEL_0, divisor & 0xFF);
-    __outb(PIT_CHANNEL_0, (divisor >> 8) & 0xFF);
-}
+struct hpet_tmr_conf_cap {
+	uint32_t int_route_cap;
+	uint16_t reserved;
+	uint8_t fsb_cap:1;
+	uint8_t fsb_enable:1;
+	uint8_t int_route:5;
+	uint8_t mode32_bit:1;
+	uint8_t reserved1:1;
+	uint8_t val_set:1;
+	uint8_t size_cap:1;
+	uint8_t periodic_cap:1;
+	uint8_t type:1;
+	uint8_t int_enable:1;
+	uint8_t int_type:1;
+	uint8_t reserved2:1;
+} __attribute__((packed));
 
-void pit_disable(void) {
-    uint8_t mask = __inb(0x21);
-    mask |= 0x1; // disable PIT
-    __outb(0x21, mask);
-	__outb(0x43, 0x30);
-	__outb(0x40, 0x0);
-	__outb(0x40, 0x0);
-}
-
-void pit_enable(void) {
-    uint8_t mask = __inb(0x21);
-    mask &= ~0x1; // disable PIT
-    __outb(0x21, mask);
-}
-
-void pit_sleep(uint64_t ms)
-{
-	pit_enable();
-	__cli();
-	sleep_ticks = ms;
-	pit_set_frequency(1);
-	__sti();
-
-	while (sleep_ticks > 0) {
-		__asm__ volatile("hlt");
-	}
-	pit_disable();
-}
+#endif

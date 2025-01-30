@@ -117,7 +117,7 @@ void int_security(struct interrupt_frame *frame)
 __attribute__((interrupt))
 void int_systimer(struct interrupt_frame *frame)
 {
-
+	kprintf("apic timer\n");
 }
 
 __attribute__((interrupt))
