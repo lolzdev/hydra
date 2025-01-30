@@ -13,5 +13,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: install lld
+      run: sudo apt install -y lld
     - name: make
       run: make
