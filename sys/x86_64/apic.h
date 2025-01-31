@@ -116,6 +116,9 @@ void apic_io_write(uint32_t reg, uint64_t value);
 uint32_t apic_io_read32(uint32_t reg);
 /* Read from a 32 bits long IOAPIC register */
 uint64_t apic_io_read(uint32_t reg);
+
+void apic_local_write(uint32_t reg, uint32_t value);
+uint32_t apic_local_read(uint32_t reg);
 void apic_init(void);
 void apic_parse_madt(void);
 void apic_io_map(uint8_t irq, uint8_t vector);

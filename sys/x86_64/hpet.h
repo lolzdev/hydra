@@ -28,6 +28,50 @@
 #define HPET_H
 
 #include <x86_64/acpi.h>
+#include <x86_64/trap.h>
+
+#define HPET_ENABLE_CNF_MASK 0x1
+#define HPET_TMR_INT_STS_MASK(tmr) (0x1 << (tmr))
+#define HPET_TMR_INT_STS_CLR(reg, tmr) (*(reg) &= (HPET_TMR_INT_STS_MASK(tmr)))
+
+#define HPET_COUNTER_CLK_PERIOD(reg) (((*reg) >> 32) & 0xffffffff)
+#define HPET_VENDOR_ID(reg) (((*reg) >> 16) & 0xffff)
+#define HPET_LEG_RT_CAP(reg) (((*reg) >> 15) & 0x1)
+#define HPET_COUNT_SIZE_CAP(reg) (((*reg) >> 13) & 0x1)
+#define HPET_NUM_TIM_CAP(reg) (((*reg) >> 8) & 0x1f)
+#define HPET_REV_ID(reg) ((*reg) & 0xff)
+
+#define HPET_RT_CNF(reg) (((*reg) >> 1) & 0x1)
+#define HPET_ENABLE_CNF(reg) ((*reg) & 0x1)
+#define HPET_RT_CNF_SET(reg) (*(reg) |= 0x2)
+#define HPET_RT_CNF_CLR(reg) (*(reg) &= ~0x2)
+#define HPET_ENABLE_CNF_SET(reg) (*(reg) |= 0x1)
+#define HPET_ENABLE_CNF_CLR(reg) (*(reg) &= ~0x1)
+
+#define HPET_TMR_ROUTE_CAP(reg) (((*reg) >> 32) & 0xffffffff)
+#define HPET_TMR_FSB_INT_DEL_CAP(reg) (((*reg) >> 15) & 0x1)
+#define HPET_TMR_FSB_EN_CNF(reg) (((*reg) >> 14) & 0x1)
+#define HPET_TMR_FSB_EN_CNF_SET(reg) (*(reg) |= (1 << 14))
+#define HPET_TMR_FSB_EN_CNF_CLR(reg) (*(reg) &= ~(1 << 14))
+#define HPET_TMR_INT_ROUTE_CNF(reg) (((*reg) >> 9) & 0x1f)
+#define HPET_TMR_INT_ROUTE_CNF_SET(reg, value) (*(reg) &= (~(0x1f << 9) | (value & 0x1f) << 9))
+#define HPET_TMR_32MODE_CNF(reg) (((*reg) >> 8) & 0x1)
+#define HPET_TMR_32MODE_CNF_SET(reg) (*(reg) |= (1 << 8))
+#define HPET_TMR_32MODE_CNF_CLR(reg) (*(reg) &= ~(1 << 8))
+#define HPET_TMR_VAL_SET_CNF(reg) (((*reg) >> 6) & 0x1)
+#define HPET_TMR_VAL_SET_CNF_SET(reg) (*(reg) |= (1 << 6))
+#define HPET_TMR_VAL_SET_CNF_CLR(reg) (*(reg) &= ~(1 << 6))
+#define HPET_TMR_SIZE_CAP(reg) (((*reg) >> 5) & 0x1)
+#define HPET_TMR_PER_INT_CAP(reg) (((*reg) >> 4) & 0x1)
+#define HPET_TMR_TYPE_CNF(reg) (((*reg) >> 3) & 0x1)
+#define HPET_TMR_TYPE_CNF_SET(reg) (*(reg) |= (1 << 3))
+#define HPET_TMR_TYPE_CNF_CLR(reg) (*(reg) &= ~(1 << 3))
+#define HPET_TMR_INT_EN_CNF(reg) (((*reg) >> 2) & 0x1)
+#define HPET_TMR_INT_EN_CNF_SET(reg) (*(reg) |= (1 << 2))
+#define HPET_TMR_INT_EN_CNF_CLR(reg) (*(reg) &= ~(1 << 2))
+#define HPET_TMR_INT_TYPE_CNF(reg) (((*reg) >> 1) & 0x1)
+#define HPET_TMR_INT_TYPE_CNF_SET(reg) (*(reg) |= (1 << 1))
+#define HPET_TMR_INT_TYPE_CNF_CLR(reg) (*(reg) &= ~(1 << 1))
 
 struct hpet_address {
 	uint8_t address_space_id;
@@ -51,44 +95,11 @@ typedef struct hpet_table {
 	uint8_t page_protection;
 } __attribute__((packed)) hpet_table_t;
 
-struct hpet_general_caps {
-	uint32_t counter_clk_period;
-	uint16_t vendor_id;
-	uint8_t legacy_cap:1;
-	uint8_t reserved:1;
-	uint8_t count_size_cap:1;
-	uint8_t timer_count:5;
-	uint8_t rev_id;
-} __attribute__((packed));
-
-struct hpet_general_config {
-	uint64_t reserved:62;
-	uint8_t legacy_enable:1;
-	uint8_t enable:1;
-} __attribute__((packed));
-
-struct hpet_general_int_status {
-	uint32_t reserved;
-	uint32_t status;
-} __attribute__((packed));
-
-struct hpet_tmr_conf_cap {
-	uint32_t int_route_cap;
-	uint16_t reserved;
-	uint8_t fsb_cap:1;
-	uint8_t fsb_enable:1;
-	uint8_t int_route:5;
-	uint8_t mode32_bit:1;
-	uint8_t reserved1:1;
-	uint8_t val_set:1;
-	uint8_t size_cap:1;
-	uint8_t periodic_cap:1;
-	uint8_t type:1;
-	uint8_t int_enable:1;
-	uint8_t int_type:1;
-	uint8_t reserved2:1;
-} __attribute__((packed));
-
 void hpet_init(void);
+uint64_t *hpet_get_tmr_conf_cap(uint8_t tmr);
+uint64_t hpet_get_tmr_value(uint8_t tmr);
+void hpet_set_tmr_value(uint8_t tmr, uint64_t value);
+void hpet_int(struct interrupt_frame *frame);
+void hpet_disable_pit(void);
 
 #endif

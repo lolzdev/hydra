@@ -35,6 +35,7 @@
 
 #define PAGE_PRESENT 0x1
 #define PAGE_WRITABLE 0x1 << 1
+#define PAGE_NO_CACHE 0x1 << 4
 #define PAGE_USER 0x1 << 2
 #define PAGE_ENTRY(address, flags) ((address & PAGE_ADDR_MASK) | flags)
 

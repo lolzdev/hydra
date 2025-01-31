@@ -25,7 +25,6 @@
 	 */
 
 .section .text
-.extern user_function
 .global ctx_switch
 ctx_switch:
 	mov $0xc0000080, %rcx

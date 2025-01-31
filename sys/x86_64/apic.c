@@ -26,13 +26,24 @@
 
 #include <x86_64/apic.h>
 #include <x86_64/inst.h>
-#include <x86_64/pit.h>
 #include <mm/mm.h>
 #include <vm/vm.h>
 #include <log/fb.h>
 
-static uint32_t *LAPIC_BASE;
+static uint32_t *LAPIC;
 static uint32_t *IOAPIC;
+
+void apic_local_write(uint32_t reg, uint32_t value)
+{
+	if (!LAPIC) return;
+	*((volatile uint32_t *) (size_t)LAPIC + reg) = value;
+}
+
+uint32_t apic_local_read(uint32_t reg)
+{
+	if (!LAPIC) return 0;
+	return *((volatile uint32_t *) ((size_t)LAPIC + reg));
+}
 
 void apic_io_write32(uint32_t reg, uint32_t value)
 {
@@ -73,25 +84,28 @@ uint64_t apic_io_read(uint32_t reg)
 
 void apic_io_map(uint8_t irq, uint8_t vector)
 {
-	*((volatile uint32_t *) (size_t)IOAPIC + (0x10 + irq * 2)) = (uint32_t) vector & 0xff;
+	//*((volatile uint32_t *) (size_t)IOAPIC + (0x10 + irq * 2)) = (uint32_t) vector & 0xff;
+	apic_io_write(0x10 + (irq * 2), vector & 0xff);
 }
 
 void apic_init(void)
 {
 	apic_parse_madt();
-
-	apic_io_map(1, 39);
 }
 
 void apic_parse_madt(void)
 {
 	madt_table_t *madt = acpi_find_sdt("APIC");
-	//LAPIC_BASE = madt->lapic_address;
+	LAPIC = mm_alloc(0x3f0);
+	vm_kmmap(LAPIC, madt->lapic_address, PAGE_PRESENT | PAGE_WRITABLE | PAGE_NO_CACHE);
+	vm_reload();
 
-	struct apic_entry_header *hdr = &madt->entries;
+	apic_local_write(0xf0, 0x100 | 39);
+
+	struct apic_entry_header *hdr = (struct apic_entry_header *) (&madt->entries);
 	size_t table_end = (size_t)madt + madt->header.length;
 
-	while (hdr < table_end) {
+	while ((size_t) hdr < table_end) {
 		apic_entry_local_t *entry_local;
 		apic_entry_io_t *entry_io;
 		apic_entry_io_iso_t *entry_io_iso;

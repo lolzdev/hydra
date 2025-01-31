@@ -38,7 +38,6 @@ static volatile struct limine_executable_address_request executable_request = {
 static pml4_t k_page_table;
 static pml4_t k_reverse_table;
 static uint64_t virt_offset;
-extern void user_function(void);
 
 void vm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t offset)
 {

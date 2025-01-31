@@ -26,7 +26,7 @@
 
 #include <x86_64/idt.h>
 #include <x86_64/trap.h>
-#include <x86_64/pit.h>
+#include <x86_64/hpet.h>
 #include <x86_64/inst.h>
 
 __attribute__((aligned(0x10)))
@@ -83,7 +83,7 @@ void idt_init(void)
 	idt_encode_entry(&IDT[12], (uint64_t)int_stack_segment, 0x08, 0x8e);
 	idt_encode_entry(&IDT[13], (uint64_t)int_gpf, 0x08, 0x8e);
 	idt_encode_entry(&IDT[14], (uint64_t)int_page_fault, 0x08, 0x8e);
-	idt_encode_entry(&IDT[32], (uint64_t)int_pit, 0x08, 0x8e);
+	idt_encode_entry(&IDT[32], (uint64_t)hpet_int, 0x08, 0x8e);
 	idt_encode_entry(&IDT[33], (uint64_t)int_keyboard, 0x08, 0x8e);
 	idt_encode_entry(&IDT[39], (uint64_t)int_systimer, 0x08, 0x8e);
 

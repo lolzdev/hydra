@@ -30,7 +30,6 @@
 #include <x86_64/gdt.h>
 #include <x86_64/idt.h>
 #include <x86_64/usr.h>
-#include <x86_64/pit.h>
 #include <x86_64/syscall.h>
 #include <x86_64/acpi.h>
 #include <x86_64/apic.h>
@@ -70,14 +69,9 @@ static volatile LIMINE_REQUESTS_START_MARKER;
 __attribute__((used, section(".limine_requests_end")))
 static volatile LIMINE_REQUESTS_END_MARKER;
 
-extern void user_function(void)
-{
-	while(1);
-}
-
 void _start(void)
 {
-	pit_disable();
+	hpet_disable_pit();
 	struct limine_framebuffer *fb = framebuffer_request.response->framebuffers[0];
 	fb_init(fb->width, fb->height, fb->address);
 	gdt_init();
@@ -90,8 +84,6 @@ void _start(void)
 	kprintf("Paging initialized.\n");
 	acpi_init();
 	kprintf("ACPI initialized.\n");
-	apic_init();
-	kprintf("APIC initialized.\n");
 	hpet_init();
 	kprintf("HPET initialized.\n");
 	//syscall_init();

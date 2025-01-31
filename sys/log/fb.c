@@ -145,7 +145,7 @@ void kprintf(char* format, ...)
                         kputchar(i);
                         break;
 
-            case 'd' : i = va_arg(arg,int);
+            case 'd' : i = va_arg(arg,int64_t);
                         if(i<0)
                         {
                             i = -i;
@@ -154,7 +154,7 @@ void kprintf(char* format, ...)
                         kputs(convert(i,10));
                         break;
 
-            case 'o': i = va_arg(arg,unsigned int);
+            case 'o': i = va_arg(arg,uint64_t);
                         kputs(convert(i,8));
                         break;
 
@@ -162,7 +162,7 @@ void kprintf(char* format, ...)
                         kputs(s);
                         break;
 
-            case 'x': i = va_arg(arg,unsigned int);
+            case 'x': i = va_arg(arg,uint64_t);
                         kputs(convert(i,16));
                         break;
         }

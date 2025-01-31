@@ -66,4 +66,14 @@ static inline void __sti(void)
 	__asm__ volatile("sti");
 }
 
+static inline void __wr8(uint64_t value)
+{
+	__asm__ ("movq %0, %%r8;"::"b"((uint64_t) value));
+}
+
+static inline void __wr9(uint64_t value)
+{
+	__asm__ ("movq %0, %%r9;"::"b"((uint64_t) value));
+}
+
 #endif
