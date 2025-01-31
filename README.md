@@ -16,3 +16,18 @@ After all the requirements are satisfied you can just fire the `make` command. T
 - `debug` (same as test, but let `qemu` wait for a `gdb` connection)
 - `gdb` (run `gdb` with a configuration so that it automatically connects to `qemu`)
 - `clean` (remove generated files)
+
+## Status
+- [X] Interrupt handling
+- [X] Dynamic memory allocation
+- [X] Virtual memory management
+- [X] ACPI table parsing
+- [X] APIC configuration
+- [ ] HPET timer
+- [X] Userspace
+- [ ] IPC
+- [ ] Process management
+- [ ] Disks management daemons (SATA, NVME)
+- [ ] Filesystem daemons (fat32, hydra-ufs)
+- [ ] VFS daemon
+- [ ] POSIX compatibility daemon
