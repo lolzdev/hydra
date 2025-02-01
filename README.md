@@ -23,7 +23,7 @@ After all the requirements are satisfied you can just fire the `make` command. T
 - [X] Virtual memory management
 - [X] ACPI table parsing
 - [X] APIC configuration
-- [ ] HPET timer
+- [X] HPET timer
 - [X] Userspace
 - [ ] IPC
 - [ ] Process management
