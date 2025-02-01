@@ -1,4 +1,10 @@
-# Hydra ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/lolzdev/hydra/build.yml) ![Progress](https://img.shields.io/badge/progress-wip-orange)
+<p align="center">
+  <img width="200" src="https://github.com/lolzdev/hydra/raw/refs/heads/master/assets/hydra.svg" />
+</p>
+
+<h1 align="center">Hydra</h1>
+
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/lolzdev/hydra/build.yml) ![Progress](https://img.shields.io/badge/progress-wip-orange)
 
 ## Introduction
 Hydra is a microkernel with the main goal of keeping the codebase [as small and simple as possible](https://suckless.org/philosophy/).
