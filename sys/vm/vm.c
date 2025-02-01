@@ -28,6 +28,7 @@
 #include <mm/mm.h>
 #include <log/fb.h>
 #include <string.h>
+#include <x86_64/inst.h>
 
 __attribute__((used, section(".limine_requests")))
 static volatile struct limine_executable_address_request executable_request = {
@@ -38,6 +39,8 @@ static volatile struct limine_executable_address_request executable_request = {
 static pml4_t k_page_table;
 static pml4_t k_reverse_table;
 static uint64_t virt_offset;
+static uint64_t k_start;
+static uint64_t k_end;
 
 void vm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t offset)
 {
@@ -57,9 +60,11 @@ void vm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t
 		for (size_t i=0; i < size / 0x1000; i++) {
 			size_t virt = ((map->base + offset) & ~(0xfff)) + (i*0x1000);
 			if (map->type == 0x6 && map->base == executable_request.response->physical_base) {
-				size_t phys = 0xffffffff80000000 + (i * 0x1000);
-				vm_kmmap(phys, map->base + (i*0x1000), PAGE_PRESENT | PAGE_WRITABLE);
-				vm_mmap(k_reverse_table, map->base + (i*0x1000), phys, PAGE_PRESENT | PAGE_WRITABLE );
+				virt = 0xffffffff80000000 + (i * 0x1000);
+				if (k_start == 0 || virt < k_start) k_start = virt;
+				if (k_end == 0 || virt > k_end) k_end = virt;
+				vm_kmmap(virt , map->base + (i*0x1000), PAGE_PRESENT | PAGE_WRITABLE);
+				vm_mmap(k_reverse_table, map->base + (i*0x1000), virt, PAGE_PRESENT | PAGE_WRITABLE );
 			} else if (map->type != 0x6) {
 				vm_kmmap(virt, virt-offset, PAGE_PRESENT | PAGE_WRITABLE);
 				vm_mmap(k_reverse_table, virt-offset, virt, PAGE_PRESENT | PAGE_WRITABLE);
@@ -68,6 +73,31 @@ void vm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t
 	}
 
 	vm_reload();
+}
+
+pml4_t vm_init_user(void)
+{
+	pml4_t pml4 = mm_alloc_pages(1);
+	vm_mmap(pml4, pml4, (uint64_t)vm_get_kphys(pml4) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE);
+	memset(pml4, 0x0, PAGE_SIZE);
+
+	for (size_t i=k_start; i < k_end; i+=PAGE_SIZE) {
+		vm_mmap(pml4, i, (uint64_t)vm_get_kphys(i) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE);
+	}
+
+	return pml4;
+}
+
+pml4_t vm_get_ktable(void)
+{
+	return k_page_table;
+}
+
+void vm_set_pml4(pml4_t pml4)
+{
+	size_t addr = (size_t) vm_get_kphys(pml4) & ~0xfff;
+	__wr8(addr);
+	__asm__ ("movq %0, %%cr3;"::"b"((uint64_t) addr));
 }
 
 void vm_reload(void)

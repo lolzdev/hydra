@@ -25,11 +25,12 @@
 	 */
 
 #include <x86_64/hpet.h>
+#include <x86_64/inst.h>
+#include <x86_64/usr.h>
 #include <x86_64/apic.h>
 #include <vm/vm.h>
 #include <mm/mm.h>
 #include <log/fb.h>
-#include <x86_64/inst.h>
 
 static uint64_t HPET;
 static uint64_t HPET_FREQ;
@@ -40,6 +41,7 @@ void hpet_int(struct interrupt_frame *frame)
 {
 	kprintf("timer1\n");
 	__outb(0x20, 0x20);
+	void (*entry)(void) = frame->ip;
 }
 
 static inline uint64_t HPET_SECONDS(uint64_t seconds)
@@ -85,7 +87,7 @@ void hpet_init(void)
 	HPET_MIN_TICK = hpet_table->minimum_tick;
 	HPET_ENABLE_CNF_SET(general_config);
 
-	hpet_init_tmr(0, HPET_SECONDS(2));
+	//hpet_init_tmr(0, HPET_SECONDS(2));
 }
 
 void hpet_disable_pit(void) {

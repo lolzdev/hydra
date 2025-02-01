@@ -48,8 +48,6 @@ typedef uint64_t *pdpt_t;
 typedef uint64_t *pd_t;
 typedef uint64_t *pt_t;
 
-extern void pt_load(uint64_t pml4);
-
 void vm_mmap(pml4_t pml4, void *virtual, void *physical, uint8_t flags);
 void vm_kmmap(void *virtual, void *physical, uint8_t flags);
 void vm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t offset);
@@ -57,5 +55,8 @@ void *vm_get_phys(pml4_t pml4, void *virtual);
 void vm_reload(void);
 void *vm_get_kvirt(void *physical);
 void *vm_get_kphys(void *virtual);
+void vm_set_pml4(pml4_t pml4);
+pml4_t vm_get_ktable(void);
+pml4_t vm_init_user(void);
 
 #endif
