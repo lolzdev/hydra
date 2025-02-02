@@ -78,8 +78,10 @@ void vm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t
 pml4_t vm_init_user(void)
 {
 	pml4_t pml4 = mm_alloc_pages(1);
-	vm_mmap(pml4, pml4, (uint64_t)vm_get_kphys(pml4) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE);
 	memset(pml4, 0x0, PAGE_SIZE);
+	//vm_kmmap(pml4, pml4 - virt_offset, PAGE_PRESENT | PAGE_WRITABLE);
+	//vm_mmap(k_reverse_table, pml4, pml4 - virt_offset, PAGE_PRESENT | PAGE_WRITABLE);
+	//vm_mmap(pml4, pml4, (uint64_t)vm_get_kphys(pml4) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE);
 
 	for (size_t i=k_start; i < k_end; i+=PAGE_SIZE) {
 		vm_mmap(pml4, i, (uint64_t)vm_get_kphys(i) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE);

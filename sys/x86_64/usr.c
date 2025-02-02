@@ -24,93 +24,15 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#include <elf.h>
-#include <string.h>
 #include <x86_64/usr.h>
-#include <x86_64/inst.h>
-#include <x86_64/gdt.h>
+#include <sched.h>
+#include <string.h>
 #include <log/fb.h>
-#include <vm/vm.h>
-#include <mm/mm.h>
-
-extern proc_t *KERNEL_PROC = NULL;
-extern proc_t *CURRENT_PROC = NULL;
-static proc_list_t proc_list;
-uint8_t user_mode = 0;
 
 void usr_load_module(void *address, size_t size)
 {
-	KERNEL_PROC = mm_alloc_pages(1);
-	CURRENT_PROC = &KERNEL_PROC;
-	/* Set the process list as empty */
-	proc_list.next = NULL;
-	proc_list.prev = NULL;
-	proc_list.proc = NULL;
-
-	elf_header_t *header = mm_alloc(size);
-	vm_kmmap((void *)header, (size_t)address & 0x00000000ffffffff, PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
-	vm_reload();
-	if (!ELF_CHECK_MAGIC(&(header->magic)))
-		kprintf("Invalid ELF executable!\n");
-	void (*entry)(void) = header->entry;
-
-	KERNEL_PROC->page_table = vm_get_ktable();
-
-	proc_t *proc = mm_alloc_pages(1);
-	proc->page_table = vm_init_user();
-	proc->state = PROC_STATE_RUNNING;
-	if (proc_list.proc == NULL) {
-		proc_list.proc = proc;
-		proc_list.prev = &proc_list;
-		proc_list.next = proc_list.prev;
-	} else {
-		proc_list_t *entry = mm_alloc_pages(1);
-		entry->prev = proc_list.prev;
-		entry->next = NULL;
-		entry->proc = proc;
-		proc_list.prev->next = entry;
-		proc_list.prev = entry;
-	}
-
-	elf_program_header_t *p_headers = (elf_program_header_t *) ((size_t)header + (size_t)(header->p_header));
-	for (uint32_t i=0; i < header->ph_num; i++) {
-		elf_program_header_t p_header = p_headers[i];
-		if (p_header.type == ELF_PT_LOAD) {
-			void *seg = (void *)((uint64_t) header + p_header.offset);
-			void *vaddr = (void *) p_header.vaddr;
-			uint64_t seg_size = p_header.file_size;
-			uint64_t mem_size = p_header.mem_size;
-			size_t pages = mem_size / 0x1000;
-			if (pages == 0) pages = 1;
-			void *addr = mm_alloc_pages(pages);
-			memcpy(addr + ((size_t)vaddr % 0x1000), seg, seg_size);
-			uint64_t bss = mem_size - seg_size;
-			if (bss > 0) {
-				memset((void *)((uint64_t)(addr + ((size_t)vaddr % 0x1000)) + seg_size), 0x0, bss);
-			}
-
-			vm_mmap(proc->page_table, (size_t)vaddr & ~0xfff, (size_t)vm_get_kphys(addr) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
-		}
-	}
-
-	uint64_t user_stack = (uint64_t) mm_alloc_pages(1);
-	vm_mmap(proc->page_table, (size_t)user_stack & ~0xfff, (size_t)vm_get_kphys(user_stack) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
-	kprintf("Loaded ELF in memory.\n");
-	proc_snapshot(&(KERNEL_PROC->regs));
-	proc_snapshot(&(proc->regs));
-	proc->regs.rsp = (user_stack + 0x1000)-1;
-	proc->regs.rbp = proc->regs.rsp;
-	kprintf("stack: %x\n", (size_t)vm_get_kphys(KERNEL_PROC->regs.rsp) & ~0xfff);
-	vm_mmap(proc->page_table, (size_t)KERNEL_PROC->regs.rsp & ~0xfff, (size_t)vm_get_kphys(KERNEL_PROC->regs.rsp) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
-	vm_mmap(proc->page_table, (size_t)KERNEL_PROC->page_table & ~0xfff, (size_t)vm_get_kphys(KERNEL_PROC->page_table) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
-	CURRENT_PROC = proc;
-	user_mode = 1;
-	ctx_switch(entry, (size_t)vm_get_kphys(proc->page_table) & ~0xfff);
-}
-
-uint8_t usr_is_user(void)
-{
-	return user_mode;
+	proc_t *proc = sched_proc_load(address, size);
+	sched_fire(proc);
 }
 
 void usr_init(struct limine_file **modules, size_t count)
@@ -118,7 +40,9 @@ void usr_init(struct limine_file **modules, size_t count)
 	for (size_t i=0; i < count; i++) {
 		struct limine_file *module = modules[i];
 
-		kprintf("Loading module %s.\n", module->path);
-		usr_load_module(module->address, module->size);
+		if (strcmp(module->path, "/boot/loop") != 0) {
+			kprintf("Loading module %s.\n", module->path);
+			usr_load_module(module->address, module->size);
+		}
 	}
 }

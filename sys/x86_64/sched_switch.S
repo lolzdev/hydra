@@ -28,14 +28,14 @@
 .extern CURRENT_PROC 
 .extern syscall_entry
 .extern tss_set_rsp0
-.global ctx_switch
-ctx_switch:
+.global sched_switch
+sched_switch:
 	pushq %rdi
+	pushq %rdx
 	mov %rsp, %rdi
 	mov %rsp, %r15
 	call tss_set_rsp0
 
-	popq %rdi
 
 	/* Enable syscall instruction by setting SCE bit
 	 * in the EFER register.
@@ -65,6 +65,9 @@ ctx_switch:
 	shl $0x10, %edx
 	wrmsr
 
+	popq %rdx
+	popq %rdi
+
 	/* Set the %rcx register to the entry point
 	 * for user code (first parameter). `sysret`
 	 * will then use %rcx to set the %rip
@@ -73,13 +76,14 @@ ctx_switch:
 	mov %rdi, %rcx
 
 	/* Setup the stack for the userspace process. */
-	movq CURRENT_PROC, %r9
-	movq 0x40(%r9), %rbp
-	movq 0x30(%r9), %rsp
+	movq %rdx, %rbp
+	movq %rdx, %rsp
 
 	/* Loade the user process page table before
 	 * jumping to userspace.
 	 */
+	mov $0xffffffff, %r9
+	and %r9, %rsi
 	mov %rsi, %cr3
 	
 	/* Enable interrupts */

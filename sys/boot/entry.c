@@ -27,6 +27,7 @@
 #include <log/fb.h>
 #include <mm/mm.h>
 #include <vm/vm.h>
+#include <sched.h>
 #include <x86_64/gdt.h>
 #include <x86_64/idt.h>
 #include <x86_64/usr.h>
@@ -88,7 +89,9 @@ void _start(void)
 	hpet_init();
 	kprintf("HPET initialized.\n");
 	//syscall_init();
+	sched_init();
 	usr_init(module_request.response->modules, module_request.response->module_count);
+	sched_start(module_request.response->modules, module_request.response->module_count);
 	
 	while(1);
 }

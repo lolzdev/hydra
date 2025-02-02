@@ -3,7 +3,6 @@
 _start:
 	pushq $0x1
 	popq %rax
-	//mov $0x1, %rax
 	mov $str, %rdi
 	syscall
 	mov $0x1, %rax

@@ -31,6 +31,7 @@
 .extern KERNEL_PROC 
 .global syscall_entry
 syscall_entry:
+	cli
 	mov k_page_table, %r9
 	mov $0xffffffff, %r8
 	and %r8, %r9
@@ -47,48 +48,14 @@ syscall_entry:
 	popq %r11
 	popq %rcx
 	
-	movq CURRENT_PROC, %r9
+	movq (CURRENT_PROC), %r9
+	movq (%r9), %r9
 	movq 0x38(%r9), %rbp
 	movq 0x30(%r9), %rsp
 	movq 0x80(%r9), %r8
 	mov $0xffffffff, %r9
 	and %r9, %r8
 	mov %r8, %cr3
-
+	sti
 	swapgs
 	sysretq
-
-/*
-.global hpet_int
-hpet_int:
-	je hpet_int
-	popq %rax
-	push %rbp
-	mov %rsp,%rbp
-	push %r11
-	push %r10
-	push %r9
-	push %r8
-	push %rdi
-	push %rsi
-	push %rdx
-	push %rcx
-	push %rax
-
-	mov $0xcafebab, %r8
-	mov $0x20, %rax
-	outb $0x20
-
-	pop %rax
-	pop %rcx
-	pop %rdx
-	pop %rsi
-	pop %rdi
-	pop %r8
-	pop %r9
-	pop %r10
-	pop %r11
-	pop %rbp
-
-	iretq
-	*/

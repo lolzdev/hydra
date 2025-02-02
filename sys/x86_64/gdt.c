@@ -50,7 +50,6 @@ void gdt_init(void)
 	gdt_encode_entry(&GDT[5], sizeof(tss_t), ((size_t)&TSS) & 0xffffffff, 0x89, 0x40);
 	GDT[6] = (((size_t)&TSS) >> 32) & 0xffffffff;
 	TSS.iopb = sizeof(tss_t);
-	kprintf("tss: %x\n", &TSS);
 
 	gdt_load((sizeof(uint64_t) * 7) - 1, (uint64_t) GDT);
 }

@@ -24,34 +24,59 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#include <x86_64/syscall.h>
+#ifndef SCHED_H
+#define SCHED_H
 
-#include <stdint.h>
-#include <log/fb.h>
 #include <vm/vm.h>
-#include <sched.h>
-#include <x86_64/inst.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <elf.h>
+#include <limine.h>
+#include <x86_64/trap.h>
 
-#define IA32_STAR   0xC0000081
-#define IA32_LSTAR  0xC0000082
-#define IA32_FMASK  0xC0000084
+#define PROC_STATE_RUNNING 0x1
+#define PROC_STATE_HALTED 0x2
+#define PROC_STATE_STOPPED 0x3
 
-extern void syscall_entry(void);
-extern proc_list_t *CURRENT_PROC;
+struct proc_registers {
+	uint64_t rax;
+	uint64_t rbx;
+	uint64_t rcx;
+	uint64_t rdx;
+	uint64_t rsi;
+	uint64_t rdi;
+	uint64_t rsp;
+	uint64_t rbp;
+	uint64_t r8;
+	uint64_t r9;
+	uint64_t r10;
+	uint64_t r11;
+	uint64_t r12;
+	uint64_t r13;
+	uint64_t r14;
+	uint64_t r15;
+};
 
-extern uint64_t syscall_handler(uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5, uint64_t arg6)
-{
-	uint64_t id;
-	__asm__("movq %%rax,%0" : "=r"(id));
+typedef struct proc {
+	struct proc_registers regs;
+	pml4_t page_table;
+	uint8_t state;
+	uint64_t rip;
+	uint16_t id;
+} proc_t;
 
-	switch (id) {
-		case 0x1:
-			char *str = (char *) ((uint64_t)vm_get_kvirt((uint64_t)vm_get_phys(CURRENT_PROC->proc->page_table, arg1) & ~0xfff) & ~0xfff) + (arg1 % 0x1000);
-			kprintf(str);
-	}
+typedef struct proc_list {
+	proc_t *proc;
+	struct proc_list *next;
+} __attribute__((packed)) proc_list_t;
 
-	return 0;
-}
+extern void sched_save_regs(struct proc_registers *registers);
+extern void sched_load_regs(struct proc_registers *registers);
+extern void sched_switch(uint64_t address, uint64_t pml4, uint64_t stack);
+void int_tmr(struct interrupt_frame *frame);
+proc_list_t *sched_fire(proc_t *proc);
+proc_t *sched_proc_load(void *address, size_t size);
+void sched_init(void);
+void sched_start(struct limine_file **modules, size_t count);
 
-void syscall_init() {
-}
+#endif

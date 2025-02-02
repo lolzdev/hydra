@@ -35,28 +35,10 @@
 static uint64_t HPET;
 static uint64_t HPET_FREQ;
 static uint16_t HPET_MIN_TICK;
-extern pml4_t k_page_table;
-extern proc_t *KERNEL_PROC;
-extern proc_t *CURRENT_PROC;
-
-__attribute__((interrupt))
-void hpet_int(struct interrupt_frame *frame)
-{
-	if (frame->cs == 0x1b) {
-		vm_reload();
-	}
-	kprintf("timer1\n");
-	__outb(0x20, 0x20);
-
-	if (frame->cs == 0x1b) {
-		vm_set_pml4(CURRENT_PROC->page_table);
-	}
-}
-
 
 static inline uint64_t HPET_SECONDS(uint64_t seconds)
 {
-	return HPET_FREQ * seconds;
+	return (HPET_FREQ * seconds);
 }
 
 uint64_t *hpet_get_tmr_conf_cap(uint8_t tmr)
@@ -97,7 +79,7 @@ void hpet_init(void)
 	HPET_MIN_TICK = hpet_table->minimum_tick;
 	HPET_ENABLE_CNF_SET(general_config);
 
-	hpet_init_tmr(0, HPET_SECONDS(2));
+	hpet_init_tmr(0, HPET_SECONDS(1));
 }
 
 void hpet_disable_pit(void) {

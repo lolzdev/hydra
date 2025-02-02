@@ -26,14 +26,12 @@
 
 #include <x86_64/idt.h>
 #include <x86_64/trap.h>
-#include <x86_64/hpet.h>
+#include <sched.h>
 #include <x86_64/inst.h>
 
 __attribute__((aligned(0x10)))
 static idt_entry_t IDT[256];
 static idtr_t IDTR;
-
-extern void hpet_int(void);
 
 void idt_encode_entry(idt_entry_t *entry, uint64_t isr, uint16_t selector, uint8_t flags)
 {
@@ -85,7 +83,7 @@ void idt_init(void)
 	idt_encode_entry(&IDT[12], (uint64_t)int_stack_segment, 0x08, 0x8e);
 	idt_encode_entry(&IDT[13], (uint64_t)int_gpf, 0x08, 0x8e);
 	idt_encode_entry(&IDT[14], (uint64_t)int_page_fault, 0x08, 0x8e);
-	idt_encode_entry(&IDT[32], (uint64_t)hpet_int, 0x08, 0x8e);
+	idt_encode_entry(&IDT[32], (uint64_t)int_tmr, 0x08, 0x8e);
 	idt_encode_entry(&IDT[33], (uint64_t)int_keyboard, 0x08, 0x8e);
 	idt_encode_entry(&IDT[39], (uint64_t)int_systimer, 0x08, 0x8e);
 

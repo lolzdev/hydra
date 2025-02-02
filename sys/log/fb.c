@@ -49,6 +49,8 @@ void fb_init(uint32_t width, uint32_t height, uint32_t *fb)
 
 void fb_kputchar_at(uint32_t x, uint32_t y, char c )
 {
+	if (x >= fb_width) x = 0;
+	if (y >= fb_height) y = 0;
 	x *= 9;
 	y *= 17;
 	uint32_t original_x = x;
