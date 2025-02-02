@@ -36,6 +36,7 @@
 extern proc_t *KERNEL_PROC = NULL;
 extern proc_t *CURRENT_PROC = NULL;
 static proc_list_t proc_list;
+uint8_t user_mode = 0;
 
 void usr_load_module(void *address, size_t size)
 {
@@ -101,8 +102,15 @@ void usr_load_module(void *address, size_t size)
 	proc->regs.rbp = proc->regs.rsp;
 	kprintf("stack: %x\n", (size_t)vm_get_kphys(KERNEL_PROC->regs.rsp) & ~0xfff);
 	vm_mmap(proc->page_table, (size_t)KERNEL_PROC->regs.rsp & ~0xfff, (size_t)vm_get_kphys(KERNEL_PROC->regs.rsp) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
+	vm_mmap(proc->page_table, (size_t)KERNEL_PROC->page_table & ~0xfff, (size_t)vm_get_kphys(KERNEL_PROC->page_table) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
 	CURRENT_PROC = proc;
+	user_mode = 1;
 	ctx_switch(entry, (size_t)vm_get_kphys(proc->page_table) & ~0xfff);
+}
+
+uint8_t usr_is_user(void)
+{
+	return user_mode;
 }
 
 void usr_init(struct limine_file **modules, size_t count)

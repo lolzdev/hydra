@@ -32,7 +32,7 @@ static tss_t TSS;
 
 void gdt_encode_entry(uint64_t *entry, uint64_t limit, uint64_t base, uint64_t access, uint64_t flags)
 {
-	*entry = (limit & 0xffff) | ((base & 0xffff) << 16) | ((base & 0xff0000) << 32) | ((access & 0xff) << 40) | ((limit & 0xf0000) << 48) | ((flags & 0xf) << 52) | ((base & 0xff000000) << 56);
+	*entry = (limit & 0xffff) | ((base & 0xffff) << 16) | ((base & 0xff0000) << 32) | ((access & 0xff) << 40) | (((limit & 0xf0000) >> 16) << 48) | ((flags & 0xf) << 52) | (((base & 0xff000000) >> 24) << 56);
 }
 
 void gdt_init(void)
@@ -58,4 +58,9 @@ void gdt_init(void)
 void tss_set_rsp0(uint64_t rsp)
 {
 	TSS.rsp0 = rsp;
+}
+
+void tss_map(pml4_t pml4)
+{
+	vm_mmap(pml4, (size_t)(&TSS) & ~0xfff, (size_t)vm_get_kphys(&TSS) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE);
 }

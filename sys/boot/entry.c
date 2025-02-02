@@ -34,6 +34,7 @@
 #include <x86_64/acpi.h>
 #include <x86_64/apic.h>
 #include <x86_64/hpet.h>
+#include <x86_64/inst.h>
 #include <limine.h>
 
 __attribute__((used, section(".limine_requests")))

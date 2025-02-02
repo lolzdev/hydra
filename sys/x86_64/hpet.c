@@ -35,15 +35,24 @@
 static uint64_t HPET;
 static uint64_t HPET_FREQ;
 static uint16_t HPET_MIN_TICK;
+extern pml4_t k_page_table;
+extern proc_t *KERNEL_PROC;
+extern proc_t *CURRENT_PROC;
 
-/*
 __attribute__((interrupt))
 void hpet_int(struct interrupt_frame *frame)
 {
+	if (frame->cs == 0x1b) {
+		vm_reload();
+	}
 	kprintf("timer1\n");
 	__outb(0x20, 0x20);
+
+	if (frame->cs == 0x1b) {
+		vm_set_pml4(CURRENT_PROC->page_table);
+	}
 }
-*/
+
 
 static inline uint64_t HPET_SECONDS(uint64_t seconds)
 {

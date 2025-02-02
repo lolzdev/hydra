@@ -58,8 +58,11 @@ syscall_entry:
 	swapgs
 	sysretq
 
+/*
 .global hpet_int
 hpet_int:
+	je hpet_int
+	popq %rax
 	push %rbp
 	mov %rsp,%rbp
 	push %r11
@@ -88,3 +91,4 @@ hpet_int:
 	pop %rbp
 
 	iretq
+	*/

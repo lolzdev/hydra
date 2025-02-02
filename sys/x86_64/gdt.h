@@ -29,6 +29,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <vm/vm.h>
 
 typedef struct tss {
 	uint32_t reserved1;
@@ -58,5 +59,6 @@ typedef struct {
 extern void gdt_load(uint16_t limit, uint64_t base);
 void gdt_init(void);
 void tss_set_rsp0(uint64_t rsp);
+void tss_map(pml4_t pml4);
 
 #endif

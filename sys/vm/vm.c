@@ -49,8 +49,8 @@ void vm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t
 	k_reverse_table = mm_alloc_pages(1);
 	memset(k_page_table, 0x0, PAGE_SIZE);
 	memset(k_reverse_table, 0x0, PAGE_SIZE);
-	vm_kmmap(k_page_table, k_page_table, PAGE_PRESENT | PAGE_WRITABLE);
-	vm_kmmap(k_reverse_table, k_reverse_table, PAGE_PRESENT | PAGE_WRITABLE);
+	vm_kmmap(k_page_table, k_page_table - virt_offset, PAGE_PRESENT | PAGE_WRITABLE);
+	vm_kmmap(k_reverse_table, k_reverse_table - virt_offset, PAGE_PRESENT | PAGE_WRITABLE);
 	
 	for (size_t i=0; i < entry_count; i++) {
 		struct limine_memmap_entry *map = memmap[i];
@@ -95,8 +95,7 @@ pml4_t vm_get_ktable(void)
 
 void vm_set_pml4(pml4_t pml4)
 {
-	size_t addr = (size_t) vm_get_kphys(pml4) & ~0xfff;
-	__wr8(addr);
+	size_t addr = (size_t) pml4 - virt_offset;
 	__asm__ ("movq %0, %%cr3;"::"b"((uint64_t) addr));
 }
 

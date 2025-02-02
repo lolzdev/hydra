@@ -72,5 +72,6 @@ typedef struct proc_list {
 extern void proc_snapshot(struct proc_registers *registers);
 extern void ctx_switch(uint64_t address, uint64_t pml4);
 void usr_init(struct limine_file **modules, size_t count);
+uint8_t usr_is_user(void);
 
 #endif
