@@ -33,6 +33,8 @@ __attribute__((aligned(0x10)))
 static idt_entry_t IDT[256];
 static idtr_t IDTR;
 
+extern void hpet_int(void);
+
 void idt_encode_entry(idt_entry_t *entry, uint64_t isr, uint16_t selector, uint8_t flags)
 {
 	entry->offset_low = (uint64_t) isr & 0xffff;

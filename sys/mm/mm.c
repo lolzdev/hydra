@@ -83,14 +83,9 @@ void mm_free_range(void *start, size_t size)
 
 struct block *mm_create_block(size_t addr, uint8_t level)
 {
-	__wr9(0xcafebabe);
 	struct block *b = (struct block *) addr;
-	__wr9(0xcafebaba);
-	__wr8(addr);
 	b->level = level;
-	__wr9(0xcafebabc);
 	b->next = NULL;
-	__wr9(0xcafebabd);
 
 	return b;
 }

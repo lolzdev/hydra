@@ -86,7 +86,7 @@ void _start(void)
 	kprintf("ACPI initialized.\n");
 	hpet_init();
 	kprintf("HPET initialized.\n");
-	syscall_init();
+	//syscall_init();
 	usr_init(module_request.response->modules, module_request.response->module_count);
 	
 	while(1);

@@ -21,4 +21,6 @@ gdt_load:
 	push %rax
 	lretq
 .reload:
+	mov $0x28, %ax
+	ltr %ax
 	ret

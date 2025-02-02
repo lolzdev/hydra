@@ -27,8 +27,16 @@
 .section .text
 .extern CURRENT_PROC 
 .extern syscall_entry
+.extern tss_set_rsp0
 .global ctx_switch
 ctx_switch:
+	pushq %rdi
+	mov %rsp, %rdi
+	mov %rsp, %r15
+	call tss_set_rsp0
+
+	popq %rdi
+
 	/* Enable syscall instruction by setting SCE bit
 	 * in the EFER register.
 	 */
@@ -74,4 +82,6 @@ ctx_switch:
 	 */
 	mov %rsi, %cr3
 	
+	/* Enable interrupts */
+	mov $0x202, %r11
 	sysretq

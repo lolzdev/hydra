@@ -36,17 +36,14 @@ static uint64_t HPET;
 static uint64_t HPET_FREQ;
 static uint16_t HPET_MIN_TICK;
 
+/*
 __attribute__((interrupt))
 void hpet_int(struct interrupt_frame *frame)
 {
-	if (frame->cs == 0x8) {
-		__asm__ volatile("swapgs");
-	}
 	kprintf("timer1\n");
-	if (frame->cs == 0x8) {
-		__asm__ volatile("swapgs");
-	}
+	__outb(0x20, 0x20);
 }
+*/
 
 static inline uint64_t HPET_SECONDS(uint64_t seconds)
 {
@@ -91,7 +88,7 @@ void hpet_init(void)
 	HPET_MIN_TICK = hpet_table->minimum_tick;
 	HPET_ENABLE_CNF_SET(general_config);
 
-	//hpet_init_tmr(0, HPET_SECONDS(2));
+	hpet_init_tmr(0, HPET_SECONDS(2));
 }
 
 void hpet_disable_pit(void) {

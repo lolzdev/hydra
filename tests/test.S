@@ -1,7 +1,9 @@
 .section .text
 .global _start
 _start:
-	mov $0x1, %rax
+	pushq $0x1
+	popq %rax
+	//mov $0x1, %rax
 	mov $str, %rdi
 	syscall
 	mov $0x1, %rax

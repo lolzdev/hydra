@@ -30,8 +30,26 @@
 #include <stdint.h>
 #include <stddef.h>
 
+typedef struct tss {
+	uint32_t reserved1;
+	uint64_t rsp0;
+	uint64_t rsp1;
+	uint64_t rsp2;
+	uint64_t reserved2;
+	uint64_t ist1;
+	uint64_t ist2;
+	uint64_t ist3;
+	uint64_t ist4;
+	uint64_t ist5;
+	uint64_t ist6;
+	uint64_t ist7;
+	uint64_t reserved3;
+	uint16_t reserved4;
+	uint16_t iopb;
+} __attribute__((packed)) tss_t;
+
 typedef uint64_t gdt_entry;
-typedef uint64_t gdt_t[5];
+typedef uint64_t gdt_t[7];
 typedef struct {
 	uint16_t limit;
 	uint64_t base;
@@ -39,5 +57,6 @@ typedef struct {
 
 extern void gdt_load(uint16_t limit, uint64_t base);
 void gdt_init(void);
+void tss_set_rsp0(uint64_t rsp);
 
 #endif

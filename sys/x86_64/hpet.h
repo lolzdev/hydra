@@ -99,7 +99,7 @@ void hpet_init(void);
 uint64_t *hpet_get_tmr_conf_cap(uint8_t tmr);
 uint64_t hpet_get_tmr_value(uint8_t tmr);
 void hpet_set_tmr_value(uint8_t tmr, uint64_t value);
-void hpet_int(struct interrupt_frame *frame);
+//void hpet_int(struct interrupt_frame *frame);
 void hpet_disable_pit(void);
 
 #endif

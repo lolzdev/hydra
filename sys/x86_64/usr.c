@@ -28,6 +28,7 @@
 #include <string.h>
 #include <x86_64/usr.h>
 #include <x86_64/inst.h>
+#include <x86_64/gdt.h>
 #include <log/fb.h>
 #include <vm/vm.h>
 #include <mm/mm.h>
@@ -98,6 +99,8 @@ void usr_load_module(void *address, size_t size)
 	proc_snapshot(&(proc->regs));
 	proc->regs.rsp = (user_stack + 0x1000)-1;
 	proc->regs.rbp = proc->regs.rsp;
+	kprintf("stack: %x\n", (size_t)vm_get_kphys(KERNEL_PROC->regs.rsp) & ~0xfff);
+	vm_mmap(proc->page_table, (size_t)KERNEL_PROC->regs.rsp & ~0xfff, (size_t)vm_get_kphys(KERNEL_PROC->regs.rsp) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
 	CURRENT_PROC = proc;
 	ctx_switch(entry, (size_t)vm_get_kphys(proc->page_table) & ~0xfff);
 }

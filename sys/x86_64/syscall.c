@@ -53,7 +53,4 @@ extern uint64_t syscall_handler(uint64_t arg1, uint64_t arg2, uint64_t arg3, uin
 }
 
 void syscall_init() {
-	__wrmsr(IA32_STAR, 0x0013000800000000);
-    __wrmsr(IA32_LSTAR, (uint64_t)syscall_entry);
-    __wrmsr(IA32_FMASK, 0xFFFFFFFFFFFFFFFD);
 }

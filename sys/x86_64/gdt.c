@@ -25,8 +25,10 @@
 	 */
 
 #include <x86_64/gdt.h>
+#include <log/fb.h>
 
 static gdt_t GDT;
+static tss_t TSS;
 
 void gdt_encode_entry(uint64_t *entry, uint64_t limit, uint64_t base, uint64_t access, uint64_t flags)
 {
@@ -44,6 +46,16 @@ void gdt_init(void)
 	gdt_encode_entry(&GDT[3], 0xfffff, 0x0, 0xfa, 0xa);
 	// kernel data
 	gdt_encode_entry(&GDT[4], 0xfffff, 0x0, 0x92, 0xc);
+	// tss
+	gdt_encode_entry(&GDT[5], sizeof(tss_t), ((size_t)&TSS) & 0xffffffff, 0x89, 0x40);
+	GDT[6] = (((size_t)&TSS) >> 32) & 0xffffffff;
+	TSS.iopb = sizeof(tss_t);
+	kprintf("tss: %x\n", &TSS);
 
-	gdt_load((sizeof(uint64_t) * 5) - 1, (uint64_t) GDT);
+	gdt_load((sizeof(uint64_t) * 7) - 1, (uint64_t) GDT);
+}
+
+void tss_set_rsp0(uint64_t rsp)
+{
+	TSS.rsp0 = rsp;
 }
