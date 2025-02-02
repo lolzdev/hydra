@@ -25,18 +25,35 @@
 	 */
 
 .section .text
+.extern k_page_table
 .extern syscall_handler
+.extern CURRENT_PROC 
+.extern KERNEL_PROC 
 .global syscall_entry
-syscall_entry:	
-	swapgs                  
-    pushq %rsp              
-    pushq %r11              
-    pushq %rcx              
-    pushq %rax              
-    call syscall_handler
-    popq %rax
-    popq %rcx
-    popq %r11
-	popq %rsp
-    swapgs
+syscall_entry:
+	mov k_page_table, %r9
+	mov $0xffffffff, %r8
+	and %r8, %r9
+	mov %r9, %cr3
+
+	movq KERNEL_PROC, %r9
+	movq 0x40(%r9), %rbp
+	movq 0x30(%r9), %rsp
+	swapgs
+
+	pushq %rcx
+	pushq %r11
+	call syscall_handler
+	popq %r11
+	popq %rcx
+
+	movq CURRENT_PROC, %r9
+	movq 0x40(%r9), %rbp
+	movq 0x30(%r9), %rsp
+	movq 0x80(%r9), %r8
+	mov $0xffffffff, %r9
+	and %r9, %r8
+	mov %r8, %cr3
+
+	swapgs
 	sysretq

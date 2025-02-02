@@ -10,7 +10,7 @@ gdt_load:
 	mov %di, gdtr
 	mov %rsi, (gdtr+2)
 	lgdt (gdtr)
-	movw $0x10, %ax
+	movw $0x20, %ax
 	movw %ax, %ds
 	movw %ax, %es
 	movw %ax, %fs

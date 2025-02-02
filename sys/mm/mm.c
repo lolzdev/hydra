@@ -26,6 +26,7 @@
 
 #include <mm/mm.h>
 #include <log/fb.h>
+#include <x86_64/inst.h>
 
 #define POW2(x) (1 << (x))
 #define LEVEL_SIZE(x) (MIN_BLOCK * POW2(x))
@@ -82,9 +83,14 @@ void mm_free_range(void *start, size_t size)
 
 struct block *mm_create_block(size_t addr, uint8_t level)
 {
+	__wr9(0xcafebabe);
 	struct block *b = (struct block *) addr;
+	__wr9(0xcafebaba);
+	__wr8(addr);
 	b->level = level;
+	__wr9(0xcafebabc);
 	b->next = NULL;
+	__wr9(0xcafebabd);
 
 	return b;
 }
@@ -182,7 +188,7 @@ void *mm_alloc_block(uint8_t level) {
 	}
 
 	if (b == NULL) {
-		return 0xcafebabe;
+		return 0x0;
 	}
 
 	while (b->level > level) {

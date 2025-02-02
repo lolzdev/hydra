@@ -32,11 +32,14 @@
 #include <vm/vm.h>
 #include <mm/mm.h>
 
-static proc_t KERNEL_PROC;
+extern proc_t *KERNEL_PROC = NULL;
+extern proc_t *CURRENT_PROC = NULL;
 static proc_list_t proc_list;
 
 void usr_load_module(void *address, size_t size)
 {
+	KERNEL_PROC = mm_alloc_pages(1);
+	CURRENT_PROC = &KERNEL_PROC;
 	/* Set the process list as empty */
 	proc_list.next = NULL;
 	proc_list.prev = NULL;
@@ -49,7 +52,7 @@ void usr_load_module(void *address, size_t size)
 		kprintf("Invalid ELF executable!\n");
 	void (*entry)(void) = header->entry;
 
-	KERNEL_PROC.page_table = vm_get_ktable();
+	KERNEL_PROC->page_table = vm_get_ktable();
 
 	proc_t *proc = mm_alloc_pages(1);
 	proc->page_table = vm_init_user();
@@ -78,22 +81,25 @@ void usr_load_module(void *address, size_t size)
 			size_t pages = mem_size / 0x1000;
 			if (pages == 0) pages = 1;
 			void *addr = mm_alloc_pages(pages);
-			vm_mmap(proc->page_table, vaddr, (size_t)addr & 0x00000000ffffffff, PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
-			vm_set_pml4(proc->page_table);
-			__wr8(0xcafebabe);
-			memcpy(vaddr, seg, seg_size);
-			__wr9(0xbabecafe);
+			memcpy(addr + ((size_t)vaddr % 0x1000), seg, seg_size);
 			uint64_t bss = mem_size - seg_size;
 			if (bss > 0) {
-				memset((void *)((uint64_t)vaddr + seg_size), 0x0, bss);
+				memset((void *)((uint64_t)(addr + ((size_t)vaddr % 0x1000)) + seg_size), 0x0, bss);
 			}
+
+			vm_mmap(proc->page_table, (size_t)vaddr & ~0xfff, (size_t)vm_get_kphys(addr) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
 		}
 	}
 
+	uint64_t user_stack = (uint64_t) mm_alloc_pages(1);
+	vm_mmap(proc->page_table, (size_t)user_stack & ~0xfff, (size_t)vm_get_kphys(user_stack) & ~0xfff, PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
 	kprintf("Loaded ELF in memory.\n");
-	proc_snapshot(&KERNEL_PROC.regs);
+	proc_snapshot(&(KERNEL_PROC->regs));
 	proc_snapshot(&(proc->regs));
-	ctx_switch(entry);
+	proc->regs.rsp = (user_stack + 0x1000)-1;
+	proc->regs.rbp = proc->regs.rsp;
+	CURRENT_PROC = proc;
+	ctx_switch(entry, (size_t)vm_get_kphys(proc->page_table) & ~0xfff);
 }
 
 void usr_init(struct limine_file **modules, size_t count)

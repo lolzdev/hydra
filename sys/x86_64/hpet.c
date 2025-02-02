@@ -39,9 +39,13 @@ static uint16_t HPET_MIN_TICK;
 __attribute__((interrupt))
 void hpet_int(struct interrupt_frame *frame)
 {
+	if (frame->cs == 0x8) {
+		__asm__ volatile("swapgs");
+	}
 	kprintf("timer1\n");
-	__outb(0x20, 0x20);
-	void (*entry)(void) = frame->ip;
+	if (frame->cs == 0x8) {
+		__asm__ volatile("swapgs");
+	}
 }
 
 static inline uint64_t HPET_SECONDS(uint64_t seconds)

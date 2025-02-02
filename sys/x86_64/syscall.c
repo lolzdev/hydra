@@ -28,6 +28,7 @@
 
 #include <stdint.h>
 #include <log/fb.h>
+#include <x86_64/usr.h>
 #include <x86_64/inst.h>
 
 #define IA32_STAR   0xC0000081
@@ -35,6 +36,7 @@
 #define IA32_FMASK  0xC0000084
 
 extern void syscall_entry(void);
+extern proc_t *CURRENT_PROC;
 
 extern uint64_t syscall_handler(uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5, uint64_t arg6)
 {
@@ -43,7 +45,7 @@ extern uint64_t syscall_handler(uint64_t arg1, uint64_t arg2, uint64_t arg3, uin
 
 	switch (id) {
 		case 0x1:
-			char *str = (char *) arg1;
+			char *str = (char *) ((uint64_t)vm_get_kvirt((uint64_t)vm_get_phys(CURRENT_PROC->page_table, arg1) & ~0xfff) & ~0xfff) + (arg1 % 0x1000);
 			kprintf(str);
 	}
 

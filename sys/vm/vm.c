@@ -36,7 +36,7 @@ static volatile struct limine_executable_address_request executable_request = {
     .revision = 0
 };
 
-static pml4_t k_page_table;
+extern pml4_t k_page_table = NULL;
 static pml4_t k_reverse_table;
 static uint64_t virt_offset;
 static uint64_t k_start;
@@ -64,7 +64,7 @@ void vm_init(struct limine_memmap_entry **memmap, uint64_t entry_count, uint64_t
 				if (k_start == 0 || virt < k_start) k_start = virt;
 				if (k_end == 0 || virt > k_end) k_end = virt;
 				vm_kmmap(virt , map->base + (i*0x1000), PAGE_PRESENT | PAGE_WRITABLE);
-				vm_mmap(k_reverse_table, map->base + (i*0x1000), virt, PAGE_PRESENT | PAGE_WRITABLE );
+				vm_mmap(k_reverse_table, map->base + (i*0x1000), virt, PAGE_PRESENT | PAGE_WRITABLE);
 			} else if (map->type != 0x6) {
 				vm_kmmap(virt, virt-offset, PAGE_PRESENT | PAGE_WRITABLE);
 				vm_mmap(k_reverse_table, virt-offset, virt, PAGE_PRESENT | PAGE_WRITABLE);

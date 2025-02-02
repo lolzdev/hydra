@@ -25,13 +25,53 @@
 	 */
 
 .section .text
+.extern CURRENT_PROC 
+.extern syscall_entry
 .global ctx_switch
 ctx_switch:
+	/* Enable syscall instruction by setting SCE bit
+	 * in the EFER register.
+	 */
 	mov $0xc0000080, %rcx
 	rdmsr
 	or $0x1, %eax
 	wrmsr
 
-	movq %rdi, %rcx
-	movq $0x202, %r11
+	/* Set the LSTAR register to `syscall_entry`
+	 * address so that when a syscall happens
+	 * the %rip register is set to the handler.
+	 */
+	mov $0xC0000082, %rcx
+	mov $syscall_entry, %rax
+	mov %rax, %rdx
+	shr $32, %rdx
+	mov $0xffffffff, %r9
+	and %r9, %rdx
+	wrmsr
+
+	/* Load kernel's code sector (0x10) in the
+	 * STAR register's bits 63:48. */
+	mov $0xC0000081, %rcx
+	rdmsr
+	mov $0x8, %edx
+	shl $0x10, %edx
+	wrmsr
+
+	/* Set the %rcx register to the entry point
+	 * for user code (first parameter). `sysret`
+	 * will then use %rcx to set the %rip
+	 * register once in userspace.
+	 */
+	mov %rdi, %rcx
+
+	/* Setup the stack for the userspace process. */
+	movq CURRENT_PROC, %r9
+	movq 0x40(%r9), %rbp
+	movq 0x30(%r9), %rsp
+
+	/* Loade the user process page table before
+	 * jumping to userspace.
+	 */
+	mov %rsi, %cr3
+	
 	sysretq
