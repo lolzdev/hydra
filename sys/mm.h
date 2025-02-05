@@ -1,5 +1,5 @@
 	/*-
-	 * Copyright 2025 Lorenzo Torres
+	 * Copyright 2024 Lorenzo Torres
  	 *
 	 * Redistribution and use in source and binary forms, with or without
 	 * modification, are permitted provided that the following conditions are met:
@@ -24,34 +24,33 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#ifndef DEVICETREE_H
-#define DEVICETREE_H
+#ifndef MM_H
+#define MM_H
 
 #include <types.h>
 
-#define DT_BEGIN_NODE 0x1
-#define DT_END_NODE 0x2
-#define DT_PROP 0x3
-#define DT_NOP 0x4
-#define DT_END 0x9
+#define PAGE_SIZE 0x1000
 
-struct dt_header {
-	uint32_t magic;
-	uint32_t totalsize;
-	uint32_t off_dt_struct;
-	uint32_t off_dt_strings;
-	uint32_t off_mem_rsvmap;
-	uint32_t version;
-	uint32_t last_comp_version;
-	uint32_t boot_cpuid_phys;
-	uint32_t size_dt_strings;
-	uint32_t size_dt_struct;
-} __attribute__((packed));
+/* Minimum size of a block (a page) */
+#define MIN_BLOCK PAGE_SIZE
+#define MAX_LEVEL 7
+#define MAX_BLOCK MIN_BLOCK * (1 << MAX_LEVEL)
 
-struct dt_reserve_entry {
-    uint64_t address;
-    uint64_t size;
-} __attribute__((packed));
+struct block {
+	struct block *next;
+	size_t level;
+};
+
+void mm_init();
+void mm_free_range(void *start, size_t size);
+void mm_free_block(void *addr, uint8_t level);
+void mm_free(void *addr, size_t size);
+void mm_free_pages(void *addr, size_t size);
+void *mm_alloc_block(uint8_t level);
+struct block *mm_buddy(struct block *block);
+uint8_t mm_buddy_is_free(struct block *block);
+struct block *mm_create_block(size_t addr, uint8_t level);
+void *mm_alloc_pages(size_t size);
+void *mm_alloc(size_t size);
 
 #endif
-

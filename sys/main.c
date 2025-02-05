@@ -24,16 +24,18 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-
 #include <types.h>
 #include <devicetree.h>
+#include <console.h>
 #include <uart.h>
 
-void kmain(uint64_t hard_id, struct dt_header *dt)
+size_t dt_addr;
+
+void kmain(uint64_t hart_id, size_t dt)
 {
 	uart_init(0x10000000);
-	for (int i=0; i<100; i++)
-		uart_puts("1) hello world!\n");
+
+	cns_printf("0x%x 0x%x 0x%x\n", *((size_t *)dt), dt_addr, (uint64_t)0xff723a20);
 
 	while (1);
 }

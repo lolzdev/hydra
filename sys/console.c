@@ -24,34 +24,70 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#ifndef DEVICETREE_H
-#define DEVICETREE_H
-
+#include <console.h>
+#include <uart.h>
 #include <types.h>
+#include <stdarg.h>
 
-#define DT_BEGIN_NODE 0x1
-#define DT_END_NODE 0x2
-#define DT_PROP 0x3
-#define DT_NOP 0x4
-#define DT_END 0x9
+/* Convert a number to a string in base `base` */
+char *cns_convert(uint64_t number, size_t base)
+{
+	char digits[] = "0123456789abcdef";
+	static char result[20];
+	result[0] = '\0';
 
-struct dt_header {
-	uint32_t magic;
-	uint32_t totalsize;
-	uint32_t off_dt_struct;
-	uint32_t off_dt_strings;
-	uint32_t off_mem_rsvmap;
-	uint32_t version;
-	uint32_t last_comp_version;
-	uint32_t boot_cpuid_phys;
-	uint32_t size_dt_strings;
-	uint32_t size_dt_struct;
-} __attribute__((packed));
+	size_t i = 0;
+	do {
+		char digit = digits[number % base];
+		number /= base;
+		result[i+1] = result[i];
+		result[i] = digit;
 
-struct dt_reserve_entry {
-    uint64_t address;
-    uint64_t size;
-} __attribute__((packed));
+		i++;
+	} while (number > 0);
 
-#endif
+	char *p1 = result;
+	char *p2 = result + i - 1;
 
+	while (p1 < p2) {
+		char tmp = *p1;
+		*p1++ = *p2;
+		*p2-- = tmp;
+	}
+
+	return result;
+}
+
+void cns_printf(char *fmt, ...)
+{
+	va_list argv;
+	va_start(argv, fmt);
+
+	while (*fmt != '\0') {
+		if (*fmt == '%') {
+			fmt++;
+			if (*fmt == '%') {
+				uart_tx('%');
+			} else if (*fmt == 'c') {
+				char char_to_print = va_arg(argv, int);
+				uart_tx(char_to_print);
+			} else if (*fmt == 's') {
+				char *s = va_arg(argv, char *);
+				uart_puts(s);
+			} else if (*fmt == 'x') {
+				char *s = cns_convert(va_arg(argv, uint64_t), 16);
+				uart_puts(s);
+			} else if (*fmt == 'd') {
+				char *s = cns_convert(va_arg(argv, uint64_t), 10);
+				uart_puts(s);
+			} else if (*fmt == 'b') {
+				char *s = cns_convert(va_arg(argv, uint64_t), 2);
+				uart_puts(s);
+			}
+		} else {
+			uart_tx(*fmt);
+		}
+		fmt++;
+	}
+	va_end(argv);
+}

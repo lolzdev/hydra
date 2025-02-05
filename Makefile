@@ -4,7 +4,8 @@ LD=$(PREFIX)ld
 
 SRC:=sys/bootstrap.S \
 	 sys/main.c \
-	 sys/uart.c
+	 sys/uart.c \
+	 sys/console.c
 
 ELF:=kernel.elf
 BIN:=kernel.bin

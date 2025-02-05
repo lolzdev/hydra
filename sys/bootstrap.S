@@ -27,9 +27,10 @@
 .section .text
 .globl _entry
 _entry:
+	la t0, dt_addr
+	sd a1, 0(t0)
 	la sp, boot_stack_top
 	call kmain
-
 loop:
 	j loop
 

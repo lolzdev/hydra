@@ -24,34 +24,9 @@
 	 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 
-#ifndef DEVICETREE_H
-#define DEVICETREE_H
+#ifndef CONSOLE_H
+#define CONSOLE_H
 
-#include <types.h>
-
-#define DT_BEGIN_NODE 0x1
-#define DT_END_NODE 0x2
-#define DT_PROP 0x3
-#define DT_NOP 0x4
-#define DT_END 0x9
-
-struct dt_header {
-	uint32_t magic;
-	uint32_t totalsize;
-	uint32_t off_dt_struct;
-	uint32_t off_dt_strings;
-	uint32_t off_mem_rsvmap;
-	uint32_t version;
-	uint32_t last_comp_version;
-	uint32_t boot_cpuid_phys;
-	uint32_t size_dt_strings;
-	uint32_t size_dt_struct;
-} __attribute__((packed));
-
-struct dt_reserve_entry {
-    uint64_t address;
-    uint64_t size;
-} __attribute__((packed));
+void cns_printf(char *fmt, ...);
 
 #endif
-
