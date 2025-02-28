@@ -22,15 +22,13 @@ isrHandler\()\num:
 .macro ISR_ERRORCODE num
     .globl isrHandler\num
 isrHandler\()\num:
-    movq %cr3, %rax
-    movq %rax, %r15
+    movq %cr3, %r15
     movq k_page_table, %rbx
     subq virt_offset, %rbx
     mov %rbx, %cr3
     pushq $\num//160              # Interrupt number
     call isrCommon
-    movq %r15, %rax
-    movq %rax, %cr3
+    movq %r15, %cr3
     addq $16, %rsp
     iretq
 .endm
