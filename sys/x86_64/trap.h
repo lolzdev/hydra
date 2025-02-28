@@ -31,16 +31,12 @@
 #include <stddef.h>
 
 struct interrupt_frame {
-	uintptr_t ip;
-	uint64_t cs;
-	uint64_t cpu_flags;
-	uintptr_t sp;
-	uint64_t ss;
+	uint64_t gs, fs, es, ds, r15, r14, r13, r12, r11, r10, r9, r8, rdi, rsi, rbp, rsp, rdx, rcx, rbx, rax, interrupt_number, error_code, rip, cs, rflags, orig_rsp, ss;
 } __attribute__((packed));
 
 void int_division_by_zero(struct interrupt_frame *frame);
 void int_breakpoint(struct interrupt_frame *frame);
-void int_page_fault(struct interrupt_frame *frame, uint64_t error);
+void int_page_fault(struct interrupt_frame *frame);
 void int_gpf(struct interrupt_frame *frame);
 void int_overflow(struct interrupt_frame *frame);
 void int_bad_opcode(struct interrupt_frame *frame);

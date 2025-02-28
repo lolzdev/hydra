@@ -28,7 +28,7 @@
 #include <log/fb.h>
 
 static gdt_t GDT;
-static tss_t TSS;
+tss_t TSS;
 
 void gdt_encode_entry(uint64_t *entry, uint64_t limit, uint64_t base, uint64_t access, uint64_t flags)
 {
@@ -54,9 +54,10 @@ void gdt_init(void)
 	gdt_load((sizeof(uint64_t) * 7) - 1, (uint64_t) GDT);
 }
 
-void tss_set_rsp0(uint64_t rsp)
+void tss_set_rsp0()
 {
-	TSS.rsp0 = rsp;
+	static uint8_t kernel_stack[4096] __attribute__((aligned(16)));
+	TSS.rsp0 = kernel_stack+sizeof(kernel_stack);
 }
 
 void tss_map(pml4_t pml4)

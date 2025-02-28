@@ -42,16 +42,15 @@ spinlock_t proc_queue_lock = {
 	.content = NULL,
 };
 
-__attribute__((interrupt))
 void int_tmr(struct interrupt_frame *frame)
 {
 	if (frame->cs == 0x1b) {
 		sched_save_regs(&(CURRENT_PROC->proc->regs));
-		CURRENT_PROC->proc->regs.rsp = frame->sp;
+		CURRENT_PROC->proc->regs.rsp = frame->rsp;
 		vm_reload();
 		lock_acquire(&proc_queue_lock);
 		if (proc_queue != NULL) {
-			CURRENT_PROC->proc->rip = frame->ip;
+			CURRENT_PROC->proc->rip = frame->rip;
 			proc_queue_tail->next = CURRENT_PROC;
 			proc_queue_tail = CURRENT_PROC;
 			if (proc_queue->next != NULL) proc_queue = proc_queue->next;

@@ -36,9 +36,9 @@ static volatile struct limine_executable_address_request executable_request = {
     .revision = 0
 };
 
-extern pml4_t k_page_table = NULL;
+pml4_t k_page_table;
 static pml4_t k_reverse_table;
-static uint64_t virt_offset;
+uint64_t virt_offset;
 static uint64_t k_start;
 static uint64_t k_end;
 

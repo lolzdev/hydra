@@ -58,7 +58,7 @@ typedef struct {
 
 extern void gdt_load(uint16_t limit, uint64_t base);
 void gdt_init(void);
-void tss_set_rsp0(uint64_t rsp);
+void tss_set_rsp0();
 void tss_map(pml4_t pml4);
 
 #endif

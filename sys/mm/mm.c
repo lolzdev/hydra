@@ -71,7 +71,7 @@ void mm_free_range(void *start, size_t size)
 	struct block *prev = mm_create_block((size_t) start, level);
 	freelist[level] = prev;
 	
-	size_t count =0;
+	size_t count = 0;
 	for (size_t i = (size_t) start + LEVEL_SIZE(level); i < (size_t) start + size; i += LEVEL_SIZE(level)) {
 		if (i >= (size_t) start + size) break;
 		struct block *block = mm_create_block(i, level);

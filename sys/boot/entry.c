@@ -83,6 +83,7 @@ void _start(void)
 	mm_init(memmap_request.response->entries, memmap_request.response->entry_count, hhdm_request.response->offset);
 	kprintf("Memory manager initialized.\n");
 	vm_init(memmap_request.response->entries, memmap_request.response->entry_count, hhdm_request.response->offset);
+	__asm__ volatile ("sti");
 	kprintf("Paging initialized.\n");
 	acpi_init();
 	kprintf("ACPI initialized.\n");
