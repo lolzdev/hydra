@@ -30,9 +30,7 @@
 .extern tss_set_rsp0
 .global sched_switch
 sched_switch:
-	pushq %rdi
 	pushq %rdx
-	mov %rsp, %rdi
 	mov %rsp, %r15
 	call tss_set_rsp0
 
@@ -66,7 +64,6 @@ sched_switch:
 	wrmsr
 
 	popq %rdx
-	popq %rdi
 
 	/* Set the %rcx register to the entry point
 	 * for user code (first parameter). `sysret`

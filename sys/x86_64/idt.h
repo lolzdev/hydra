@@ -52,7 +52,7 @@ typedef struct {
 	uint64_t base;
 } __attribute__((packed)) idtr_t;
 
-void idt_encode_entry(idt_entry_t *entry, uint64_t isr, uint16_t selector, uint8_t flags);
+idt_entry_t idt_encode_entry(uint64_t isr, uint16_t selector, uint8_t flags);
 void idt_init(void);
 
 #endif

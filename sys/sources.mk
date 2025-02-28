@@ -16,4 +16,5 @@ x86_64/syscall_init.S \
 x86_64/apic.c \
 x86_64/acpi.c \
 x86_64/hpet.c \
-x86_64/sched_save.S
+x86_64/sched_save.S \
+x86_64/idt_asm.S
