@@ -44,6 +44,7 @@ spinlock_t proc_queue_lock = {
 
 void int_tmr(struct interrupt_frame *frame)
 {
+    kprintf("timer\n");
 	if (frame->cs == 0x1b) {
 		sched_save_regs(&(CURRENT_PROC->proc->regs));
 		CURRENT_PROC->proc->regs.rsp = frame->rsp;

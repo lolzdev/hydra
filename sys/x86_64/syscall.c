@@ -45,9 +45,10 @@ extern uint64_t syscall_handler(uint64_t arg1, uint64_t arg2, uint64_t arg3, uin
 	__asm__("movq %%rax,%0" : "=r"(id));
 
 	switch (id) {
-		case 0x1:
+		case 0x1: {
 			char *str = (char *) ((uint64_t)vm_get_kvirt((uint64_t)vm_get_phys(CURRENT_PROC->proc->page_table, arg1) & ~0xfff) & ~0xfff) + (arg1 % 0x1000);
 			kprintf(str);
+        }
 	}
 
 	return 0;
