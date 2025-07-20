@@ -22,5 +22,11 @@ pub fn build(b: *std.Build) void {
     });
     exe.setLinkerScript(b.path("src/linker.ld"));
 
+    const run_cmd = b.addSystemCommand(&.{
+        "qemu-system-riscv64", "-nographic", "-bios", "zig-out/bin/sbi", "-M", "virt"
+    });
+    const run = b.step("run", "Run the kernel in qemu");
+    run.dependOn(&run_cmd.step);
+
     b.installArtifact(exe);
 }
