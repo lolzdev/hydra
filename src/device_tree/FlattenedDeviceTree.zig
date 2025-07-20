@@ -1,6 +1,7 @@
 const FlattenedDeviceTree = @This();
 const UartConsole = @import("../console/UartConsole.zig");
 const std = @import("std");
+const console = UartConsole {};
 
 pub const ParsingError = error {
     InvalidHeader
@@ -44,8 +45,11 @@ fn readU32(slice: []u8) u32 {
     return (@as(u32, @intCast(slice[3])) | (@as(u32, @intCast(slice[2])) << 8) | (@as(u32, @intCast(slice[1])) << 16) | (@as(u32, @intCast(slice[0])) << 24));
 }
 
-pub fn parse(address: usize) !FlattenedDeviceTree {
-    const header = @as(*Header, @ptrFromInt(address));
+pub fn parse() !FlattenedDeviceTree {
+    const dtb = @embedFile("platform_dtb");
+    const address = @as(usize, @intFromPtr(dtb.ptr));
+    //const address = @as(usize, 0x100000);
+    const header = @as(*Header, @alignCast(@constCast(@ptrCast(dtb.ptr))));
     
     // Validate the table header
     if (header.magic != @byteSwap(@as(u32, 0xd00dfeed))) {
@@ -74,7 +78,6 @@ pub fn parse(address: usize) !FlattenedDeviceTree {
     const strings_address = address + (@as(usize, @intCast(strings_offset)));
     const strings = @as([*]u8, @ptrFromInt(strings_address));
 
-    const console = UartConsole {};
 
     const structure_offset = @as(u32, @byteSwap(header.structure_offset));
     const structure_address = address + @as(usize, @intCast(structure_offset));

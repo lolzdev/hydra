@@ -1,5 +1,6 @@
 export fn _start() callconv(.Naked) void {
     asm volatile(
+        \\csrr a0, mhartid
         \\bnez a0, loop
         \\csrw satp, zero
         \\la gp, __global_pointer
@@ -30,15 +31,18 @@ const FlattenedDeviceTree = @import("device_tree/FlattenedDeviceTree.zig");
 const UartConsole = @import("console/UartConsole.zig");
 const console = UartConsole {};
 
-export fn main(a0: usize, fdt_base: usize) callconv(.c) void {
-    _ = a0;
+export fn main(heart: usize, fdt_base: usize) callconv(.c) void {
+    _ = heart;
+    _ = fdt_base;
     _ = Machine {
         .hearts = 65,
         .vendor_id = 0,
         .arch_id = 0
     };
 
-    if (FlattenedDeviceTree.parse(fdt_base)) |device_tree| {
+    console.printString("ses\n");
+
+    if (FlattenedDeviceTree.parse()) |device_tree| {
         _ = device_tree;
         console.printString("Found valid device tree\n");
     } else |err| switch(err) {
@@ -51,7 +55,7 @@ export fn main(a0: usize, fdt_base: usize) callconv(.c) void {
 }
 
 export fn trap() callconv(.c) void {
-    const cause = asm volatile("csrr t0, scause" : [ret] "={t0}" (-> usize));
+    const cause = asm volatile("csrr t0, mcause" : [ret] "={t0}" (-> usize));
     if ((cause >> 63) & 0x1 == 1) {
         console.printString("interrupt");
     } else {
