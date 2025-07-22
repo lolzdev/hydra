@@ -47,11 +47,13 @@ export fn main(heart: usize) callconv(.c) void {
     };
 
     console.printString("Booting Hydra\n");
-    console.printString("Booting Hydra2\n");
     
     if (FlattenedDeviceTree.parse(allocator.allocator())) |device_tree| {
-        //console.printString("Found valid device tree\n");
-        device_tree.dump(allocator.allocator());
+        if (device_tree.getDevices(allocator.allocator(), "cpus", "cpu").first) |node|{
+            const devtree_node: *DeviceTree.Node = @fieldParentPtr("node", node);
+            console.printString(devtree_node.name);
+        } else {
+        }
     } else |err| switch(err) {
         FlattenedDeviceTree.ParsingError.InvalidHeader => {
             console.printString("Failed to parse the device tree\n");
