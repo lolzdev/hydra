@@ -36,7 +36,7 @@ pub fn build(b: *std.Build) void {
     exe.setLinkerScript(b.path("src/linker.ld"));
 
     const run_cmd = b.addSystemCommand(&.{
-        "qemu-system-riscv64", "-nographic", "-bios", "zig-out/bin/hydra", "-M", "virt"
+        "qemu-system-riscv64", "-nographic", "-kernel", "zig-out/bin/hydra", "-M", "virt", "-no-reboot", "-d", "int", "-d", "cpu_reset"
     });
     run_cmd.step.dependOn(b.default_step);
 

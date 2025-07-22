@@ -3,7 +3,7 @@ ENTRY( _start )
 
 MEMORY
 {
-  ram  (wxa) : ORIGIN = 0x80000000, LENGTH = 128M
+  ram  (wxa) : ORIGIN = 0x0000000080200000, LENGTH = 128M
 }
 
 PHDRS
@@ -45,6 +45,6 @@ SECTIONS
   PROVIDE(__memory_start = ORIGIN(ram));
   PROVIDE(__stack = __bss_end + 0x80000);
   PROVIDE(__memory_end = ORIGIN(ram) + LENGTH(ram));
-  PROVIDE(__heap_start = _stack);
+  PROVIDE(__heap_start = __stack);
   PROVIDE(__heap_size = __memory_end - __heap_start);
 }

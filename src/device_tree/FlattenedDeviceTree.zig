@@ -2,6 +2,7 @@ const FlattenedDeviceTree = @This();
 const UartConsole = @import("../console/UartConsole.zig");
 const std = @import("std");
 const console = UartConsole {};
+const DeviceTree = @import("DeviceTree.zig");
 
 pub const ParsingError = error {
     InvalidHeader
@@ -45,10 +46,9 @@ fn readU32(slice: []u8) u32 {
     return (@as(u32, @intCast(slice[3])) | (@as(u32, @intCast(slice[2])) << 8) | (@as(u32, @intCast(slice[1])) << 16) | (@as(u32, @intCast(slice[0])) << 24));
 }
 
-pub fn parse() !FlattenedDeviceTree {
+pub fn parse(allocator: std.mem.Allocator) !DeviceTree {
     const dtb = @embedFile("platform_dtb");
     const address = @as(usize, @intFromPtr(dtb.ptr));
-    //const address = @as(usize, 0x100000);
     const header = @as(*Header, @alignCast(@constCast(@ptrCast(dtb.ptr))));
     
     // Validate the table header
@@ -67,7 +67,6 @@ pub fn parse() !FlattenedDeviceTree {
         }
         
         reservation_list_length += 1;
-
         entry_address += @sizeOf(ReservationEntry);
         break;
     }
@@ -76,29 +75,28 @@ pub fn parse() !FlattenedDeviceTree {
 
     const strings_offset = @as(u32, @byteSwap(header.strings_offset));
     const strings_address = address + (@as(usize, @intCast(strings_offset)));
-    const strings = @as([*]u8, @ptrFromInt(strings_address));
-
 
     const structure_offset = @as(u32, @byteSwap(header.structure_offset));
     const structure_address = address + @as(usize, @intCast(structure_offset));
     const structure = @as([*]u8, @ptrFromInt(structure_address));
-    //const data = @as([*]u8, @ptrFromInt(structure_address));
 
     var index = @as(usize, 0);
+    var parent_stack: std.SinglyLinkedList = .{};
+    var current_node: *DeviceTree.Node = DeviceTree.Node.init(allocator, "/");
     while (true) {
         if (readU32(structure[index..index+4]) == @intFromEnum(TokenType.end)) break;
 
         switch (@as(TokenType, @enumFromInt(readU32(structure[index..index+4])))) {
             TokenType.begin_node => {
+                parent_stack.prepend(&current_node.node);
                 index += 4;
 
                 const name = @as([*]u8, structure[index..]);
-                console.printZeroedString(name);
-                console.printString(" ->\n");
                 var j = @as(usize, 1);
                 while (name[j] != 0) {
                     j += 1;
                 }
+                current_node = DeviceTree.Node.init(allocator, name[0..j]);
 
                 index += j+1;
                 if (index % 4 > 0) {
@@ -113,24 +111,41 @@ pub fn parse() !FlattenedDeviceTree {
                 const name = @as([*]u8, @ptrFromInt(strings_address+name_offset));
                 index += 4;
 
-                console.printZeroedString(name);
+                var j = @as(usize, 0);
+                while (name[j] != 0) {
+                    j += 1;
+                }
 
                 if (length % 4 > 0) {
                     length = length + (4 - length % 4);
                 }
 
                 if (name[0] != '#') {
-                    console.printString(" = ");
-                    console.printZeroedString(@ptrCast(&structure[index]));
-                    console.printString("\n");
+                    const value = @as([*]u8, @ptrCast(&structure[index]));
+
+                    var k = @as(usize, 0);
+                    while (value[k] != 0) {
+                        k += 1;
+                    }
+
+                    const property = DeviceTree.Property.init(allocator, name[0..j], .{ .string = value[0..k] });
+                    current_node.properties.prepend(&property.node);
                 } else {
-                    console.printString("\n");
+                    const property = DeviceTree.Property.init(allocator, name[0..j], .{ .string = "" });
+                    current_node.properties.prepend(&property.node);
                 }
 
                 index += length;
             },
             TokenType.end_node => {
                 index += 4;
+                if (parent_stack.popFirst()) |parent| {
+                    const parent_node: *DeviceTree.Node = @fieldParentPtr("node", parent);
+                    parent_node.children.prepend(&current_node.node);
+                    current_node = parent_node;
+                } else {
+                    break;
+                }
             },
             TokenType.nop => {
                 index += 4;
@@ -140,10 +155,9 @@ pub fn parse() !FlattenedDeviceTree {
         }
     }
 
-    console.printString(strings[0..10]);
+    _ = reservation_list;
 
     return .{
-        .header = header,
-        .reservation_list = reservation_list
+        .root = current_node,
     };
 }

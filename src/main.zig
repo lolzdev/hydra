@@ -1,8 +1,5 @@
-export fn _start() callconv(.Naked) void {
+export fn _start() linksection(".text.init") callconv(.naked) void {
     asm volatile(
-        \\csrr a0, mhartid
-        \\bnez a0, loop
-        \\csrw satp, zero
         \\la gp, __global_pointer
         \\la t0, __bss_start
         \\la t1, __bss_end
@@ -11,76 +8,61 @@ export fn _start() callconv(.Naked) void {
         \\addi t0, t0, 8
         \\bltu t0, t1, 1b
         \\la sp, __stack
-        \\li t0, (0b11 << 11) | (1 << 7) | (1 << 3)
-        \\csrw mstatus, t0
-        \\la t2, trap
-        \\csrw stvec, t2
-        \\li t3, (1 << 3) | (1 << 11)
-        \\csrw sie, t3
-        \\j main
-        \\j loop
+        \\la t0, trap
+        \\csrw stvec, t0
+        \\call main
     );
-}
-
-export fn loop() callconv(.c) void {
-    while (true) {}
 }
 
 const Machine = @import("Machine.zig");
 const FlattenedDeviceTree = @import("device_tree/FlattenedDeviceTree.zig");
 const UartConsole = @import("console/UartConsole.zig");
-const console = UartConsole {};
+const DeviceTree = @import("device_tree/DeviceTree.zig");
+const std = @import("std");
 
-export fn main(heart: usize, fdt_base: usize) callconv(.c) void {
-    _ = heart;
-    _ = fdt_base;
-    _ = Machine {
-        .hearts = 65,
-        .vendor_id = 0,
-        .arch_id = 0
+const __heap_start =  @extern(*u64, .{
+    .name = "__heap_start",
+    .linkage = .strong,
+});
+
+const __heap_size =  @extern(*u64, .{
+    .name = "__heap_size",
+    .linkage = .strong,
+});
+
+pub fn getHeapBuffer() []u8 {
+    const start = @as([*]u8, @ptrCast(__heap_start));
+    return start[0..@intFromPtr(__heap_size)];
+}
+
+export fn main(heart: usize) callconv(.c) void {
+    if (heart != 0) {
+        while (true) {}
+    }
+    const console = UartConsole.init();
+
+    var allocator: std.heap.FixedBufferAllocator = .{
+        .end_index = 0,
+        .buffer = getHeapBuffer(),
     };
 
-    console.printString("ses\n");
-
-    if (FlattenedDeviceTree.parse()) |device_tree| {
-        _ = device_tree;
-        console.printString("Found valid device tree\n");
+    console.printString("Booting Hydra\n");
+    console.printString("Booting Hydra2\n");
+    
+    if (FlattenedDeviceTree.parse(allocator.allocator())) |device_tree| {
+        //console.printString("Found valid device tree\n");
+        device_tree.dump(allocator.allocator());
     } else |err| switch(err) {
         FlattenedDeviceTree.ParsingError.InvalidHeader => {
             console.printString("Failed to parse the device tree\n");
         }
     }
+
+    console.printString("Done\n");
     
     while (true) {}
 }
 
 export fn trap() callconv(.c) void {
-    const cause = asm volatile("csrr t0, mcause" : [ret] "={t0}" (-> usize));
-    if ((cause >> 63) & 0x1 == 1) {
-        console.printString("interrupt");
-    } else {
-        switch (cause) {
-            0 => console.printString("Instruction address misaligned\n"),
-            1 => console.printString("Instruction access fault\n"),
-            2 => console.printString("Illegal instruction\n"),
-            3 => console.printString("Breakpoint\n"),
-            4 => console.printString("Load address misaligned\n"),
-            5 => console.printString("Load access fault\n"),
-            6 => console.printString("Store/AMO address misaligned\n"),
-            7 => console.printString("Store/AMO access fault\n"),
-            8 => console.printString("Environment call from U-mode\n"),
-            9 => console.printString("Environment call from S-mode\n"),
-            10 => console.printString("Reserved\n"),
-            11 => console.printString("Environment call from M-mode\n"),
-            12 => console.printString("Instruction page fault\n"),
-            13 => console.printString("Load page fault\n"),
-            14 => console.printString("Reserved\n"),
-            15 => console.printString("Store/AMO page fault\n"),
-            16 => console.printString("Double trap\n"),
-            17 => console.printString("Reserved\n"),
-            18 => console.printString("Software check\n"),
-            19 => console.printString("Hardware error\n"),
-            else => console.printString("unknown trap\n"),
-        }
-    }
+    while (true) {}
 }
