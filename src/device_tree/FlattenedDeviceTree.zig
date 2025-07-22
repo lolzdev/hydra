@@ -1,7 +1,6 @@
 const FlattenedDeviceTree = @This();
-const UartConsole = @import("../console/UartConsole.zig");
+const Ns16550a = @import("../console.zig").Ns16550a;
 const std = @import("std");
-const console = UartConsole {};
 const DeviceTree = @import("DeviceTree.zig");
 
 pub const ParsingError = error {
@@ -120,8 +119,50 @@ pub fn parse(allocator: std.mem.Allocator) !DeviceTree {
                     length = length + (4 - length % 4);
                 }
 
-                if (name[0] != '#') {
-                    const value = @as([*]u8, @ptrCast(&structure[index]));
+                const value = @as([*]u8, @ptrCast(&structure[index]));
+                if (std.mem.eql(u8, name[0..j], "#address-cells")) {
+                    for (0..4) |i| {
+                        current_node.address_cells |= (@as(u32, @intCast(value[i])) << (8 * @as(u5, @intCast(i))));
+                    }
+                    current_node.address_cells = @byteSwap(current_node.address_cells);
+                } else if (std.mem.eql(u8, name[0..j], "#size-cells")) {
+                    for (0..4) |i| {
+                        current_node.size_cells |= (@as(u32, @intCast(value[i])) << (8 * @as(u5, @intCast(i))));
+                    }
+                    current_node.size_cells = @byteSwap(current_node.size_cells);
+                }  else if (std.mem.eql(u8, name[0..j], "reg")) {
+                    var register_address = @as(usize, 0);
+                    var size = @as(usize, 0);
+                    var current_val = @as(usize, 0);
+                    if (parent_stack.first) |parent| {
+                        const parent_node: *DeviceTree.Node = @fieldParentPtr("node", parent);
+
+                        for (0..parent_node.address_cells) |cell| {
+                            for ((cell * 4)..(cell * 4 + 4)) |i| {
+                                current_val |= (@as(usize, @intCast(value[i])) << (8 * @as(u6, @intCast(i % 4))));
+                            }
+
+                            register_address >>= 32;
+                            register_address |= (current_val << (32 * @as(u6, @intCast(cell))));
+                            current_val = 0;
+                        }
+                        register_address = @byteSwap(register_address);
+                        
+                        current_val = 0;
+
+                        for (0..parent_node.size_cells) |cell| {
+                            for ((cell * 4 + (parent_node.address_cells * 4))..(cell * 4 + 4 + (parent_node.address_cells * 4))) |i| {
+                                current_val |= (@as(usize, @intCast(value[i])) << (8 * @as(u6, @intCast(i % 4))));
+                            }
+                            size |= (current_val << (32 * @as(u6, @intCast(cell))));
+                        }
+
+                        size = @byteSwap(size);
+
+                        const property = DeviceTree.Property.init(allocator, name[0..j], .{ .reg = .{ .address = register_address, .size = size } });
+                        current_node.properties.prepend(&property.node);
+                    }
+                } else if (std.mem.eql(u8, name[0..j], "compatible") or std.mem.eql(u8, name[0..j], "device_type")) {
 
                     var k = @as(usize, 0);
                     while (value[k] != 0) {

@@ -1,13 +1,17 @@
 const std = @import("std");
 const SinglyLinkedList = std.SinglyLinkedList;
-const UartConsole = @import("../console/UartConsole.zig");
 const DeviceTree = @This();
+const UartConsole = @import("../console.zig").Ns16550a;
 
 pub const Property = struct {
     const Self = @This();
     pub const Value = union {
         string: []const u8,
         int: u64,
+        reg: struct {
+            address: usize,
+            size: usize
+        },
     };
 
     name: []const u8,
@@ -29,6 +33,8 @@ pub const Property = struct {
 pub const Node = struct {
     const Self = @This();
     name: []const u8,
+    address_cells: u32 = 0,
+    size_cells: u32 = 0,
     properties: SinglyLinkedList,
     children: SinglyLinkedList,
     node: SinglyLinkedList.Node,
@@ -83,13 +89,38 @@ pub fn getDevices(device_tree: *const DeviceTree, allocator: std.mem.Allocator, 
 }
 
 pub fn getDevice(device_tree: *const DeviceTree, path: []const u8, ty: []const u8) ?*Node {
+    return device_tree.withProperty(path, "device_type", .{.string = ty});
+}
+
+pub fn compatibleWith(device_tree: *const DeviceTree, path: []const u8, device: []const u8) ?*Node {
     const root_node = device_tree.getNode(path) orelse return null;
     var node = root_node.children.first;
     while (node) |n| {
         const devtree_node: *Node = @fieldParentPtr("node", n);
         
-        if (devtree_node.getProperty("device_type")) |device_type| {
-            if (std.mem.eql(u8, device_type.value.string, ty)) {
+        if (devtree_node.getProperty("compatible")) |compat| {
+            var compatibilities = std.mem.splitSequence(u8, compat.value.string, ",");
+            
+            while (compatibilities.next()) |compatibility| {
+                if (std.mem.eql(u8, compatibility, device)) {
+                    return devtree_node;
+                }
+            }
+        }
+        node = n.next;
+    }
+
+    return null;
+}
+
+pub fn withProperty(device_tree: *const DeviceTree, path: []const u8, property: []const u8, value: Property.Value) ?*Node {
+    const root_node = device_tree.getNode(path) orelse return null;
+    var node = root_node.children.first;
+    while (node) |n| {
+        const devtree_node: *Node = @fieldParentPtr("node", n);
+        
+        if (devtree_node.getProperty(property)) |device_type| {
+            if (std.mem.eql(Property.Value, device_type.value, value)) {
                 return devtree_node;
             }
         }
@@ -125,30 +156,6 @@ pub fn getNode(device_tree: *const DeviceTree, path: []const u8) ?*Node {
     }
 
     return null;
-}
-
-pub fn dump(device_tree: *const DeviceTree, allocator: std.mem.Allocator) void {
-    const console = UartConsole {};
-    var node = device_tree.root.children.first;
-    while (node) |n| {
-        const devtree_node: *DeviceTree.Node = @fieldParentPtr("node", n);
-        var prop = devtree_node.properties.first;
-        while (prop) |property| {
-            const node_prop: *DeviceTree.Property = @fieldParentPtr("node", property);
-            console.printString(node_prop.name);
-            const name = node_prop.name;
-            const name2 = allocator.alloc(u8, name.len) catch @panic("OOM");
-            @memcpy(name2, "model");
-            if (std.mem.eql(u8, name, "model")) {
-                console.printString(" = ");
-                console.printString(node_prop.value.string);
-            }
-            console.printChar('\n');
-            prop = property.next;
-        }
-        
-        node = n.next;
-    }
 }
 
 root: *Node,

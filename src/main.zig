@@ -16,8 +16,9 @@ export fn _start() linksection(".text.init") callconv(.naked) void {
 
 const Machine = @import("Machine.zig");
 const FlattenedDeviceTree = @import("device_tree/FlattenedDeviceTree.zig");
-const UartConsole = @import("console/UartConsole.zig");
+const UartConsole = @import("console.zig");
 const DeviceTree = @import("device_tree/DeviceTree.zig");
+const console = @import("console.zig");
 const std = @import("std");
 
 const __heap_start =  @extern(*u64, .{
@@ -39,29 +40,21 @@ export fn main(heart: usize) callconv(.c) void {
     if (heart != 0) {
         while (true) {}
     }
-    const console = UartConsole.init();
 
     var allocator: std.heap.FixedBufferAllocator = .{
         .end_index = 0,
         .buffer = getHeapBuffer(),
     };
 
-    console.printString("Booting Hydra\n");
-    
     if (FlattenedDeviceTree.parse(allocator.allocator())) |device_tree| {
-        if (device_tree.getDevices(allocator.allocator(), "cpus", "cpu").first) |node|{
-            const devtree_node: *DeviceTree.Node = @fieldParentPtr("node", node);
-            console.printString(devtree_node.name);
-        } else {
+        if (console.serial(device_tree)) |serial| {
+            serial.printString("Booting Hydra\n") catch @panic("error with console\n");
         }
     } else |err| switch(err) {
         FlattenedDeviceTree.ParsingError.InvalidHeader => {
-            console.printString("Failed to parse the device tree\n");
         }
     }
 
-    console.printString("Done\n");
-    
     while (true) {}
 }
 
