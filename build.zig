@@ -19,14 +19,23 @@ pub fn build(b: *std.Build) void {
         .code_model = .medium
     });
 
-    exe_mod.addAnonymousImport("platform_dtb", .{
-        .root_source_file = b.path(dtb_path),
-    });
 
     const exe = b.addExecutable(.{
         .name = "hydra",
         .root_module = exe_mod,
     });
+
+    const root_mod = b.createModule(.{
+        .root_source_file = b.path("src/root.zig"),
+        .target = target,
+        .optimize = optimize,
+        .code_model = .medium
+    });
+
+    root_mod.addAnonymousImport("platform_dtb", .{
+        .root_source_file = b.path(dtb_path),
+    });
+    exe_mod.addImport("hydra", root_mod);
 
     const dtb_cmd = b.addSystemCommand(&.{
         "dtc", "-I", "dts", "-O", "dtb", "-o", dtb_path, dts_path

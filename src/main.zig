@@ -10,15 +10,16 @@ export fn _start() linksection(".text.init") callconv(.naked) void {
         \\la sp, __stack
         \\la t0, trap
         \\csrw stvec, t0
+        \\csrsi sstatus, 2
         \\call main
     );
 }
 
-const Machine = @import("Machine.zig");
-const FlattenedDeviceTree = @import("device_tree/FlattenedDeviceTree.zig");
-const UartConsole = @import("console.zig");
-const DeviceTree = @import("device_tree/DeviceTree.zig");
-const console = @import("console.zig");
+const hydra = @import("hydra");
+const FlattenedDeviceTree = hydra.hw.FlattenedDeviceTree;
+const DeviceTree = hydra.hw.DeviceTree;
+const timer = hydra.timer;
+const sbi = hydra.sbi;
 const std = @import("std");
 
 const __heap_start =  @extern(*u64, .{
@@ -36,19 +37,27 @@ pub fn getHeapBuffer() []u8 {
     return start[0..@intFromPtr(__heap_size)];
 }
 
+//var serial: ?hydra.console.Serial = null;
+
 export fn main(heart: usize) callconv(.c) void {
     if (heart != 0) {
         while (true) {}
     }
+
 
     var allocator: std.heap.FixedBufferAllocator = .{
         .end_index = 0,
         .buffer = getHeapBuffer(),
     };
 
+
+
     if (FlattenedDeviceTree.parse(allocator.allocator())) |device_tree| {
-        if (console.serial(device_tree)) |serial| {
+        if (hydra.console.serial(device_tree)) |serial| {
             serial.printString("Booting Hydra\n") catch @panic("error with console\n");
+            
+            timer.addTime(10000000) catch @panic("");
+            timer.enable();
         }
     } else |err| switch(err) {
         FlattenedDeviceTree.ParsingError.InvalidHeader => {
@@ -58,6 +67,8 @@ export fn main(heart: usize) callconv(.c) void {
     while (true) {}
 }
 
-export fn trap() callconv(.c) void {
-    while (true) {}
+export fn trap() align(4) callconv(.{.riscv64_interrupt = .{ .mode = .supervisor }}) void {
+    sbi.DebugConsole.write("Timer\n") catch @panic("");
+    timer.addTime(timer.milliseconds(500)) catch @panic("");
+    timer.clear();
 }

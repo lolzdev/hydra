@@ -1,6 +1,7 @@
-const FlattenedDeviceTree = @This();
-const Ns16550a = @import("../console.zig").Ns16550a;
+/// Flattened device tree parsing (https://devicetree-specification.readthedocs.io/en/stable/index.html)
+
 const std = @import("std");
+const FlattenedDeviceTree = @This();
 const DeviceTree = @import("DeviceTree.zig");
 
 pub const ParsingError = error {

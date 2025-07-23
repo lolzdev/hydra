@@ -1,7 +1,6 @@
 const std = @import("std");
 const SinglyLinkedList = std.SinglyLinkedList;
 const DeviceTree = @This();
-const UartConsole = @import("../console.zig").Ns16550a;
 
 pub const Property = struct {
     const Self = @This();
