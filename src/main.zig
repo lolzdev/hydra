@@ -5,6 +5,7 @@ const timer = hydra.timer;
 const sbi = hydra.sbi;
 const std = @import("std");
 const trap = @import("trap.zig");
+const kernelPanic = @import("panic.zig").kernelPanic;
 export const trap_handler = trap.trap_handler;
 
 const __heap_start =  @extern(*u64, .{
@@ -16,6 +17,8 @@ const __heap_size =  @extern(*u64, .{
     .name = "__heap_size",
     .linkage = .strong,
 });
+
+pub const panic = std.debug.FullPanic(kernelPanic);
 
 export fn _start() linksection(".text.init") callconv(.naked) void {
     asm volatile(
@@ -50,12 +53,10 @@ export fn main(heart: usize) callconv(.c) void {
     };
 
     if (FlattenedDeviceTree.parse(allocator.allocator())) |device_tree| {
-        if (hydra.console.serial(device_tree)) |serial| {
-            serial.printString("Booting Hydra\n") catch @panic("error with console\n");
-            
-            timer.addTime(5000000) catch @panic("");
-            timer.enable();
-        }
+        hydra.console.init(device_tree);
+
+        hydra.console.print("Booting hydra\n", .{});
+        @panic("random error");
     } else |err| switch(err) {
         FlattenedDeviceTree.ParsingError.InvalidHeader => {
         }
