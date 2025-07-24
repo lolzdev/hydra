@@ -5,3 +5,13 @@ pub inline fn readScause() usize {
         [ret] "={a0}" (-> usize)
     );
 }
+
+pub inline fn readRegister(reg: usize) usize {
+    return asm volatile(
+        "mv t0, x%[reg]"
+        :
+        [ret] "={t0}" (-> usize)
+        :
+        [reg] "I" (reg),
+    );
+}
