@@ -13,21 +13,21 @@ const Registers = enum(usize) {
 address: [*]volatile u8,
 
 pub fn init(address: usize) *Self {
-    const console: Self = .{
+    instance = .{
         .address = @ptrFromInt(address),
     };
+
     const lcr = (1 << 0) | (1 << 1);
-    console.address[3] = lcr;
-    console.address[2] = 1 << 0;
-    console.address[1] = 1 << 0;
-    console.address[3] = lcr | (1 << 7);
+    instance.address[3] = lcr;
+    instance.address[2] = 1 << 0;
+    instance.address[1] = 1 << 0;
+    instance.address[3] = lcr | (1 << 7);
     const divisor: u16 = 592;
     const divisor_least: u8 = divisor & 0xff;
     const divisor_most:  u8 = divisor >> 8;
-    console.address[0] = divisor_least;
-    console.address[1] = divisor_most;
-    console.address[3] = lcr;
-    instance = console;
+    instance.address[0] = divisor_least;
+    instance.address[1] = divisor_most;
+    instance.address[3] = lcr;
 
     return &instance;
 }
