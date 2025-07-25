@@ -1,11 +1,9 @@
 const hydra = @import("hydra");
 const FlattenedDeviceTree = hydra.hw.FlattenedDeviceTree;
-const DeviceTree = hydra.hw.DeviceTree;
-const timer = hydra.timer;
-const sbi = hydra.sbi;
 const std = @import("std");
-const trap = @import("trap.zig");
 const kernelPanic = @import("panic.zig").kernelPanic;
+const trap = @import("trap.zig");
+
 export const trap_handler = trap.trap_handler;
 
 const __heap_start =  @extern(*u64, .{
