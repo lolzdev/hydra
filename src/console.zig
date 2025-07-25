@@ -23,6 +23,6 @@ pub fn getSerial(device_tree: DeviceTree) ?Serial {
     return null;
 }
 
-pub fn print(comptime format: []const u8, args: anytype) void {
+pub inline fn print(comptime format: []const u8, args: anytype) void {
     serial.writer.print(format, args) catch @panic("Failed to print on the serial console.");
 }

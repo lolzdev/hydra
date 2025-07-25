@@ -56,7 +56,6 @@ export fn main(heart: usize) callconv(.c) void {
         hydra.console.init(device_tree);
 
         hydra.console.print("Booting hydra\n", .{});
-        @panic("random error");
     } else |err| switch(err) {
         FlattenedDeviceTree.ParsingError.InvalidHeader => {
         }
