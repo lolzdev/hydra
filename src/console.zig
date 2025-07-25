@@ -14,7 +14,7 @@ pub fn init(device_tree: DeviceTree) void {
 }
 
 pub fn getSerial(device_tree: DeviceTree) ?Serial {
-    if (device_tree.compatibleWith("soc", "ns16550a")) |node|{
+    if (device_tree.compatibleWith("soc", "ns16550a,snps")) |node|{
         if (node.getProperty("reg")) |reg| {
             return Ns16550a.init(reg.value.reg.address).serial();
         }
