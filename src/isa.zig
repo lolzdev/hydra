@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0
 pub inline fn readScause() usize {
     return asm volatile(
         "csrr %[ret], scause"

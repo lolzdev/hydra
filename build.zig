@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0
 const std = @import("std");
 const SinglyLinkedList = std.SinglyLinkedList;
 const DeviceTree = @This();
@@ -94,6 +95,7 @@ pub fn getDevice(device_tree: *const DeviceTree, path: []const u8, ty: []const u
 pub fn compatibleWith(device_tree: *const DeviceTree, path: []const u8, device: []const u8) ?*Node {
     const root_node = device_tree.getNode(path) orelse return null;
     var node = root_node.children.first;
+    var requested = std.mem.splitSequence(u8, device, ",");
     while (node) |n| {
         const devtree_node: *Node = @fieldParentPtr("node", n);
         
@@ -101,9 +103,12 @@ pub fn compatibleWith(device_tree: *const DeviceTree, path: []const u8, device: 
             var compatibilities = std.mem.splitSequence(u8, compat.value.string, ",");
             
             while (compatibilities.next()) |compatibility| {
-                if (std.mem.eql(u8, compatibility, device)) {
-                    return devtree_node;
+                while (requested.next()) |req| {
+                    if (std.mem.eql(u8, compatibility, req)) {
+                        return devtree_node;
+                    }
                 }
+                requested.reset();
             }
         }
         node = n.next;

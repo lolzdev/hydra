@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0
 pub const console = @import("console.zig");
 pub const hw = struct {
     pub const DeviceTree = @import("device_tree/DeviceTree.zig");

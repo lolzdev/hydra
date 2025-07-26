@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0
 const Serial = @This();
 const std = @import("std");
 const Writer = std.Io.Writer;

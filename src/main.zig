@@ -1,8 +1,11 @@
+// SPDX-License-Identifier: GPL-3.0
+
 const hydra = @import("hydra");
 const FlattenedDeviceTree = hydra.hw.FlattenedDeviceTree;
 const std = @import("std");
 const kernelPanic = @import("panic.zig").kernelPanic;
 const trap = @import("trap.zig");
+const BuddyAllocator = @import("mem/BuddyAllocator.zig");
 
 export const trap_handler = trap.trap_handler;
 

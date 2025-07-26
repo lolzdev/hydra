@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0
 const sbi = @import("sbi.zig");
 
 pub fn getTime() u64 {

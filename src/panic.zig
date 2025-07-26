@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0
 const sbi = hydra.sbi;
 const isa = @import("isa.zig");
 const hydra = @import("hydra");

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0
 /// Flattened device tree parsing (https://devicetree-specification.readthedocs.io/en/stable/index.html)
 
 const std = @import("std");

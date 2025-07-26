@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0
 const hydra = @import("hydra");
 const timer = hydra.timer;
 const sbi = hydra.sbi;

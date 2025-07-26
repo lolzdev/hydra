@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0
 const Error = error {
     failed,
     not_supported,

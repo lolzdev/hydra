@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0
 const Serial = @import("Serial.zig");
 const Self = @This();
 
