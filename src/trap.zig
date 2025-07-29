@@ -32,6 +32,8 @@ const ExceptionCause = enum(usize) {
 pub fn trap_handler() align(4) callconv(.{.riscv64_interrupt = .{ .mode = .supervisor }}) void {
     const cause = isa.readScause();
     const code_mask = ~(@as(usize, 0x1) << 63);
+    const pc = isa.readSepc();
+    hydra.console.print("Trap at: 0x{x}", .{pc});
 
     if (cause & (0x1 << 63) != 0) {
         switch (@as(TrapCause, @enumFromInt(cause & code_mask))) {
@@ -52,6 +54,7 @@ pub fn trap_handler() align(4) callconv(.{.riscv64_interrupt = .{ .mode = .super
         switch (@as(ExceptionCause, @enumFromInt(cause & code_mask))) {
             else => {
                 sbi.DebugConsole.write("Exception\n") catch @panic("");
+                while (true) {}
             }
         }
     }

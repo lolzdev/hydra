@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
+const sbi = hydra.sbi;
 const hydra = @import("hydra");
 const FlattenedDeviceTree = hydra.hw.FlattenedDeviceTree;
 const std = @import("std");
@@ -9,12 +10,12 @@ const BuddyAllocator = @import("mem/BuddyAllocator.zig");
 
 export const trap_handler = trap.trap_handler;
 
-const __heap_start =  @extern(*u64, .{
+const __heap_start = @extern(*u64, .{
     .name = "__heap_start",
     .linkage = .strong,
 });
 
-const __heap_size =  @extern(*u64, .{
+const __heap_size = @extern(*u64, .{
     .name = "__heap_size",
     .linkage = .strong,
 });
@@ -55,8 +56,12 @@ export fn main(heart: usize) callconv(.c) void {
 
     if (FlattenedDeviceTree.parse(allocator.allocator())) |device_tree| {
         hydra.console.init(device_tree);
-
         hydra.console.print("Booting hydra\n", .{});
+
+        BuddyAllocator.init(device_tree);
+        const a = BuddyAllocator.allocator();
+        const ptr = a.create(usize) catch @panic("OOM");
+        hydra.console.print("Allocated: 0x{x}\n", .{@intFromPtr(ptr)});
     } else |err| switch(err) {
         FlattenedDeviceTree.ParsingError.InvalidHeader => {
         }

@@ -5,7 +5,7 @@ const DeviceTree = @This();
 
 pub const Property = struct {
     const Self = @This();
-    pub const Value = union {
+    pub const Value = union(enum) {
         string: []const u8,
         int: u64,
         reg: struct {
@@ -124,9 +124,20 @@ pub fn withProperty(device_tree: *const DeviceTree, path: []const u8, property: 
         const devtree_node: *Node = @fieldParentPtr("node", n);
         
         if (devtree_node.getProperty(property)) |device_type| {
-            if (std.mem.eql(Property.Value, device_type.value, value)) {
-                return devtree_node;
+            switch (device_type.value) {
+                .string => {
+                    if (std.mem.eql(u8, device_type.value.string, value.string)) {
+                        return devtree_node;
+                    }
+                },
+                .int => {
+                    if (device_type.value.int == value.int) {
+                        return devtree_node;
+                    }
+                },
+                else => unreachable,
             }
+            
         }
         node = n.next;
     }

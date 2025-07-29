@@ -6,7 +6,7 @@ const hydra = @import("hydra");
 pub fn kernelPanic(msg: []const u8, first_trace_addr: ?usize) noreturn {
     hydra.console.print(
         \\{s}Kernel panic: {s}
-        \\at: {?}
+        \\at: 0x{?}
         \\Register values:
         \\stack pointer: 0x{x}
         \\global pointer: 0x{x}
