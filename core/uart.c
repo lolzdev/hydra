@@ -15,28 +15,27 @@ void uart_puts(char *s)
 		uart_putc(*s++);
 }
 
-static char *convert(uint64_t num, int base)
+static char *convert(unsigned long num, int base)
 {
-	static char representation[]= "0123456789abcdef";
+	static char Representation[] = "0123456789abcdef";
 	static char buffer[50];
 	char *ptr;
 
 	ptr = &buffer[49];
 	*ptr = '\0';
 
-	while(1) {
-	*--ptr = representation[num%base];
-		if (num == 0) break;
-	num /= base;
-	}
+	do {
+		*--ptr = Representation[num % base];
+		num /= base;
+	} while(num != 0);
 
-	return ptr;
+	return(ptr);
 }
 
 void uart_printf(char* format, ...)
 {
 	char *traverse;
-	int i;
+	long i; 
 	char *s;
 
 	va_list arg;
@@ -44,42 +43,60 @@ void uart_printf(char* format, ...)
 
 	for(traverse = format; *traverse != '\0'; traverse++)
 	{
-		while( *traverse != '%' && *traverse != '\0')
-		{
-		    uart_putc(*traverse);
-		    traverse++;
+		if (*traverse != '%') {
+			uart_putc(*traverse);
+			continue;
 		}
-
-			if (*traverse == '\0') break;
 
 		traverse++;
 
+		if (*traverse == '\0') {
+			break;
+		}
+
 		switch(*traverse)
 		{
-		    case 'c' : i = va_arg(arg,int);
-				uart_putc(i);
-				break;
+		case 'c' : 
+			i = va_arg(arg, int);
+			uart_putc(i);
+			break;
 
-		    case 'd' : i = va_arg(arg,int64_t);
-				if(i<0)
-				{
-				    i = -i;
-				    uart_putc('-');
-				}
-				uart_puts(convert(i,10));
-				break;
+		case 'd' : 
+			i = va_arg(arg, long);
+			if(i < 0) {
+				i = -i;
+		        	uart_putc('-');
+		    	}
+			uart_puts(convert(i, 10));
+			break;
 
-		    case 'o': i = va_arg(arg,uint64_t);
-				uart_puts(convert(i,8));
-				break;
+		case 'o': 
+			i = va_arg(arg, unsigned long);
+			uart_puts(convert(i, 8));
+			break;
 
-		    case 's': s = va_arg(arg,char *);
+		case 's': 
+			s = va_arg(arg, char *);
+			if (!s) { 
+				uart_puts("(null)"); 
+			} else {
 				uart_puts(s);
-				break;
+			}
+			break;
 
-		    case 'x': i = va_arg(arg,uint64_t);
-				uart_puts(convert(i,16));
-				break;
+		case 'x': 
+			i = va_arg(arg, unsigned long);
+			uart_puts(convert(i, 16));
+			break;
+		
+		case '%':
+			uart_putc('%');
+			break;
+		    
+		default:
+			uart_putc('%');
+			uart_putc(*traverse);
+			break;
 		}
 	}
 

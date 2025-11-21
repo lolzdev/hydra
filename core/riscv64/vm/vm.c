@@ -3,7 +3,6 @@
 #include "../../uart.h"
 
 uint64_t *kernel_pt;
-extern unsigned char __memory_start[];
 
 static void zero(void *ptr, size_t size)
 {
@@ -18,10 +17,11 @@ void vm_init(void)
 	zero((void *)kernel_pt, sizeof(uint64_t) * 512);
 
 	for (size_t i=0x80000000; i < 0x80600000; i+=0x1000) {
-		vm_mmap(kernel_pt, i, i, 0b00011111);
+		vm_mmap(kernel_pt, i, i, 0xf);
 	}
 
-	vm_mmap(kernel_pt, 0x10000000, 0x10000000, 0b00011111);
+	vm_mmap(kernel_pt, 0x10000000, 0x10000000, 0xf);
+
 	uint64_t satp = ((uint64_t)9 << 60) | ((uint64_t)kernel_pt >> 12);
 	__asm__ volatile("csrw satp, %0; sfence.vma" : : "r"(satp));
 	uart_puts("Virtual memory initialized.\n");

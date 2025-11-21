@@ -16,7 +16,10 @@ static struct block *freelist[MAX_LEVEL+1];
 
 void buddy_init(void)
 {
-	size_t memory_end = 0x80000000;
+	size_t ram_base = 0x80000000;
+	size_t ram_size = 128 * 1024 * 1024;
+	size_t memory_end = ram_base + ram_size;
+
 	size_t memory_size = memory_end - (size_t)__memory_start;
 
 	mm_free_range((void *)__memory_start, memory_size);
@@ -25,25 +28,37 @@ void buddy_init(void)
 
 void mm_free_range(void *start, size_t size)
 {
-	uint8_t level = 0;
-	while (size > (size_t)LEVEL_SIZE(level)) {
-		if (level > MAX_LEVEL) {
-			level = MAX_LEVEL;
+	size_t start_addr = (size_t)start;
+	size_t aligned_start = ALIGNUP(start_addr, 4096);
+
+	if (aligned_start > start_addr + size) return;
+	size -= (aligned_start - start_addr);
+
+	start = (void*)aligned_start;
+
+	size_t current_addr = (size_t)start;
+	size_t end_addr = current_addr + size;
+
+	while (current_addr + LEVEL_SIZE(0) <= end_addr) {
+		uint8_t level = MAX_LEVEL;
+		while (level > 0) {
+			size_t blk_size = LEVEL_SIZE(level);
+			if (current_addr + blk_size > end_addr) {
+				level--;
+				continue;
+			}
+			if (current_addr & (blk_size - 1)) {
+				level--;
+				continue;
+			}
 			break;
 		}
-		level++;
-	}
 
-	struct block *prev = mm_create_block((size_t) start, level);
-	freelist[level] = prev;
-	
-	size_t count = 0;
-	for (size_t i = (size_t) start + LEVEL_SIZE(level); i < (size_t) start + size; i += LEVEL_SIZE(level)) {
-		if (i >= (size_t) start + size) break;
-		struct block *block = mm_create_block(i, level);
-		prev->next = block;
-		prev = block;
-		count++;
+		struct block *b = mm_create_block(current_addr, level);
+		b->next = freelist[level];
+		freelist[level] = b;
+
+		current_addr += LEVEL_SIZE(level);
 	}
 }
 
@@ -107,8 +122,11 @@ uint8_t mm_merge(struct block *b)
 			s = s->next;
 		}
 
+		if (buddy < b) {
+			b = buddy;
+		}
+
 		b->level++;
-		
 		return 1;
 	}
 
