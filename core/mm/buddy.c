@@ -1,5 +1,5 @@
-#include "buddy.h"
-#include "../uart.h"
+#include <mm/buddy.h>
+#include <drivers/uart.h>
 
 #define POW2(x) (1 << (x))
 #define LEVEL_SIZE(x) (MIN_BLOCK * POW2(x))

@@ -3,8 +3,16 @@ include config.mk
 SRC:=core/riscv64/bootstrap.S\
      core/main.c\
      core/uart.c\
+     core/proc.c\
+     core/mem.c\
+     core/init.c\
+     core/sched.c\
      core/mm/buddy.c\
-     core/riscv64/vm/vm.c
+     core/riscv64/isa.c\
+     core/riscv64/timer.c\
+     core/riscv64/vm/vm.c\
+     core/riscv64/trap.S\
+     core/riscv64/trap_handler.c
 
 ELF:=kernel.elf
 BIN:=kernel.bin
@@ -15,8 +23,8 @@ OBJS:=$(OBJS:.S=.o)
 all: $(ELF)
 
 .PHONY: $(ELF)
-$(ELF): $(OBJS)
-	$(LD) $(LDFLAGS) -Tcore/riscv64/linker.ld $(OBJS) -o $(ELF)
+$(ELF): $(OBJS) initrd
+	$(LD) $(LDFLAGS) -Tcore/riscv64/linker.ld $(OBJS) ramdisk.o -o $(ELF)
 
 .PHONY: $(BIN)
 $(BIN): $(ELF)
@@ -26,8 +34,25 @@ $(BIN): $(ELF)
 clean:
 	@rm -rfv $(OBJS) $(BIN) $(ELF)
 
+.PHONY: qemu
+qemu: $(ELF)
+	qemu-system-riscv64 -m 2G -M virt -nographic -kernel kernel.elf
+.PHONY: debug 
+debug: $(ELF)
+	qemu-system-riscv64 -m 2G -M virt -nographic -kernel kernel.elf -s -S
+
+.PHONY: initrd
+initrd:
+	@make -C vfs
+	@mkdir initrd
+	@cp vfs/vfs initrd/
+	tar -cf initramfs.tar -C initrd/ vfs
+	@rm -rf initrd
+	$(CC) -c ramdisk.S -o ramdisk.o
+	@rm -rf initramfs.tar
+
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -fPIE -Icore/include -c $< -o $@
 
 %.o: %.S
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -fPIE -c $< -o $@
