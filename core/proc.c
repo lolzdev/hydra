@@ -13,7 +13,7 @@
 
 struct process_node *process_list;
 
-void process_create(uint64_t address, size_t size)
+void process_create(uint64_t address)
 {
 	struct process_node *node = mm_alloc(sizeof(struct process_node));
 	node->proc.page_table = vm_create_page_table();

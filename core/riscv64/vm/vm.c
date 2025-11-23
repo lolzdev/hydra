@@ -5,6 +5,8 @@
 
 uint64_t *kernel_pt;
 
+#define HH_MASK 0xffffffff00000000UL
+
 static void zero(void *ptr, size_t size)
 {
 	for (size_t i = 0; i < size; i++) {
@@ -16,7 +18,7 @@ void vm_init(void)
 {
 	kernel_pt = vm_create_page_table();
 
-	for (size_t i=0x80000000; i < 0x80600000; i+=0x1000) {
+	for (size_t i=0x80000000; i < 0xC0000000; i+=0x1000) {
 		vm_mmap(kernel_pt, 0xffffffff00000000 + i, i, VM_PTE_VALID | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_EXEC);
 	}
 
@@ -27,7 +29,8 @@ void vm_init(void)
 
 void vm_load_page_table(uint64_t *pt)
 {
-	riscv_set_satp(RISCV_MAKE_SATP(pt, RISCV_SATP_SV48));
+	size_t table = vm_get_phys(kernel_pt, (size_t)pt);
+	riscv_set_satp(RISCV_MAKE_SATP(table, RISCV_SATP_SV48));
 	vm_reload();
 }
 
@@ -47,22 +50,22 @@ void vm_mmap(uint64_t *table, size_t virtual, size_t physical, uint64_t flags)
 
 	if (!table[vpn3]) {
 		uint64_t address = (uint64_t)mm_alloc(sizeof(uint64_t) * 512);
-		table[vpn3] = ((address >> 12) << 10) | VM_PTE_VALID;
+		table[vpn3] = (((address - HH_MASK) >> 12) << 10) | VM_PTE_VALID;
 		zero((void *)address, sizeof(uint64_t) * 512);
 	}
-	uint64_t *layer2 = (uint64_t *) ((table[vpn3] >> 10) << 12);
+	uint64_t *layer2 = (uint64_t *) ((((table[vpn3] >> 10) << 12)) | HH_MASK);
 	if (!layer2[vpn2]) {
 		uint64_t address = (uint64_t)mm_alloc(sizeof(uint64_t) * 512);
-		layer2[vpn2] = ((address >> 12) << 10) | VM_PTE_VALID;
+		layer2[vpn2] = (((address - HH_MASK) >> 12) << 10) | VM_PTE_VALID;
 		zero((void *)address, sizeof(uint64_t) * 512);
 	}
-	uint64_t *layer1 = (uint64_t *) ((layer2[vpn2] >> 10) << 12);
+	uint64_t *layer1 = (uint64_t *) (((layer2[vpn2] >> 10) << 12) | HH_MASK);
 	if (!layer1[vpn1]) {
 		uint64_t address = (uint64_t)mm_alloc(sizeof(uint64_t) * 512);
-		layer1[vpn1] = ((address >> 12) << 10) | VM_PTE_VALID;
+		layer1[vpn1] = (((address - HH_MASK) >> 12) << 10) | VM_PTE_VALID;
 		zero((void *)address, sizeof(uint64_t) * 512);
 	}
-	uint64_t *layer0 = (uint64_t *) ((layer1[vpn1] >> 10) << 12);
+	uint64_t *layer0 = (uint64_t *) (((layer1[vpn1] >> 10) << 12) | HH_MASK);
 
 	uint64_t pte = ((physical >> 12) << 10) | (flags & 0xff);
 
@@ -76,9 +79,9 @@ uint64_t vm_get_phys(uint64_t *table, size_t virtual)
 	uint32_t vpn2 = (virtual >> 30) & 0x1ff;
 	uint32_t vpn3 = (virtual >> 39) & 0x1ff;
 
-	uint64_t *layer2 = (uint64_t *) ((table[vpn3] >> 10) << 12);
-	uint64_t *layer1 = (uint64_t *) ((layer2[vpn2] >> 10) << 12);
-	uint64_t *layer0 = (uint64_t *) ((layer1[vpn1] >> 10) << 12);
+	uint64_t *layer2 = (uint64_t *) ((((table[vpn3] >> 10) << 12)) | HH_MASK);
+	uint64_t *layer1 = (uint64_t *) (((layer2[vpn2] >> 10) << 12) | HH_MASK);
+	uint64_t *layer0 = (uint64_t *) (((layer1[vpn1] >> 10) << 12) | HH_MASK);
 
 	return (layer0[vpn0] >> 10) << 12;
 }

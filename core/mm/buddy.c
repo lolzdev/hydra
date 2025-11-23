@@ -16,11 +16,11 @@ static struct block *freelist[MAX_LEVEL+1];
 
 void buddy_init(void)
 {
-	size_t ram_base = 0x80000000;
+	size_t ram_base = (size_t)__memory_start;
 	size_t ram_size = 128 * 1024 * 1024;
 	size_t memory_end = ram_base + ram_size;
 
-	size_t memory_size = memory_end - (size_t)__memory_start;
+	size_t memory_size = memory_end - ram_base;
 
 	mm_free_range((void *)__memory_start, memory_size);
 	uart_puts("Buddy allocator initialized.\n");
@@ -179,7 +179,7 @@ void *mm_alloc_block(uint8_t level) {
 void mm_free_pages(void *addr, size_t size)
 {
 	uint8_t level = 0;
-	while ((size * PAGE_SIZE) > LEVEL_SIZE(level)) level++;
+	while ((size * PAGE_SIZE) > (size_t)LEVEL_SIZE(level)) level++;
 
 	mm_free_block(addr, level);
 }
@@ -187,7 +187,7 @@ void mm_free_pages(void *addr, size_t size)
 void *mm_alloc_pages(size_t size)
 {
 	uint8_t level = 0;
-	while ((size * PAGE_SIZE) > LEVEL_SIZE(level)) level++;
+	while ((size * PAGE_SIZE) > (size_t)LEVEL_SIZE(level)) level++;
 
 	/* In this case, no free block was found, we can assume
 	 * that the memory is full.

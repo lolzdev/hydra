@@ -52,7 +52,7 @@ struct process_node {
 	struct process_node *next;
 };
 
-void process_create(uint64_t address, size_t size);
+void process_create(uint64_t address);
 void process_kill(uint16_t id);
 
 #endif

@@ -25,11 +25,11 @@ void kernel_init()
 			break;
 		}
 
-		uart_puts(header->name);
+		uart_puts((char *)header->name);
 		size_t file_size = oct2int(header->size);
 		uint8_t *data = (uint8_t *) header + sizeof(struct tar_header);
 		
-		process_create((uint64_t)data, file_size);
+		process_create((uint64_t)data);
 
 		size_t offset = sizeof(struct tar_header) + ((file_size + sizeof(struct tar_header) - 1) / sizeof(struct tar_header)) * sizeof(struct tar_header);
 

@@ -53,7 +53,7 @@ initrd:
 	@rm -rf initramfs.tar
 
 %.o: %.c
-	$(CC) $(CFLAGS) -fPIE -Icore/include -c $< -o $@
+	$(CC) $(CFLAGS) -Icore/include -c $< -o $@
 
 %.o: %.S
-	$(CC) $(CFLAGS) -fPIE -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@

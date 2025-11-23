@@ -1,54 +1,61 @@
 OUTPUT_ARCH(riscv)
-ENTRY(_entry)
+ENTRY(_start)
 
 BASE_ADDRESS = 0x80400000;
 
+PHDRS
+{
+	trampoline PT_LOAD FLAGS(5); /* RX */
+	text       PT_LOAD FLAGS(5); /* RX */
+	data       PT_LOAD FLAGS(6); /* RW */
+}
+
 SECTIONS
 {
-    /* Load the kernel at this address: "." means the current address */
-    . = BASE_ADDRESS;
-    . = ALIGN(4K);
+	. = BASE_ADDRESS;
 
-    .trampoline : {
-	    *(.text.trampoline)
-    }
+	.trampoline : {
+		__trampoline_start = .;
+		*(.text.trampoline)
+		*(.data.trampoline)
+		. = ALIGN(4096);
+	} :trampoline
 
-    . = ALIGN(4K);
+	_kernel_lma_start = .;
 
-    _vma_base = .; 
-    _lma_base = LOADADDR(.trampoline) + SIZEOF(.trampoline);
+	. += 0xFFFFFFFF00000000;
 
-    . += 0xFFFFFFFF00000000;
+	.text : AT(_kernel_lma_start) {
+		_entry = .;
+		*(.text .text.*)
+	} :text
 
-    .text : AT(_lma_base) {
-        *(.text .text.*)
-    }
+	. = ALIGN(4096);
 
-    . = ALIGN(4K);
-    rodata_start = .;
-    .rodata : AT(LOADADDR(.text) + SIZEOF(.text)) {
-        srodata = .;
-        *(.rodata .rodata.*)
-        erodata = .;
-    }
+	.rodata : AT(ALIGN(LOADADDR(.text) + SIZEOF(.text), 4096)) {
+		srodata = .;
+		*(.rodata .rodata.*)
+		erodata = .;
+	} :text
 
-    . = ALIGN(4K);
-    data_start = .;
-    .data : AT(LOADADDR(.rodata) + SIZEOF(.rodata)) {
-        sdata = .;
-        *(.data .data.*)
-        edata = .;
-    }
+	. = ALIGN(4096);
 
-    . = ALIGN(4K);
-    bss_start = .;
-    .bss : AT(LOADADDR(.data) + SIZEOF(.data)) {
-        *(.bss.stack)
-        sbss_clear = .;
-        *(.sbss .bss .bss.*)
-        ebss_clear = .;
-    }
+	.data : AT(ALIGN(LOADADDR(.rodata) + SIZEOF(.rodata), 4096)) {
+	sdata = .;
+		*(.data .data.*)
+		*(.sdata .sdata.*)
+		edata = .;
+	} :data
 
-    . = ALIGN(4K);
-    PROVIDE(__memory_start = LOADADDR(.bss) + SIZEOF(.bss));
+	. = ALIGN(4096);
+
+	.bss : AT(ALIGN(LOADADDR(.data) + SIZEOF(.data), 4096)) {
+		sbss = .;
+		*(.bss .bss.*)
+		*(.sbss .sbss.*)
+		ebss = .;
+	} :data
+
+	. = ALIGN(4096);
+	PROVIDE(__memory_start = .);
 }
