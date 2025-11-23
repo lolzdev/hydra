@@ -7,19 +7,26 @@ SECTIONS
 {
     /* Load the kernel at this address: "." means the current address */
     . = BASE_ADDRESS;
+    . = ALIGN(4K);
 
-    kernel_start = .;
+    .trampoline : {
+	    *(.text.trampoline)
+    }
 
     . = ALIGN(4K);
 
-    text_start = .;
-    .text : {
+    _vma_base = .; 
+    _lma_base = LOADADDR(.trampoline) + SIZEOF(.trampoline);
+
+    . += 0xFFFFFFFF00000000;
+
+    .text : AT(_lma_base) {
         *(.text .text.*)
     }
 
     . = ALIGN(4K);
     rodata_start = .;
-    .rodata : {
+    .rodata : AT(LOADADDR(.text) + SIZEOF(.text)) {
         srodata = .;
         *(.rodata .rodata.*)
         erodata = .;
@@ -27,7 +34,7 @@ SECTIONS
 
     . = ALIGN(4K);
     data_start = .;
-    .data : {
+    .data : AT(LOADADDR(.rodata) + SIZEOF(.rodata)) {
         sdata = .;
         *(.data .data.*)
         edata = .;
@@ -35,7 +42,7 @@ SECTIONS
 
     . = ALIGN(4K);
     bss_start = .;
-    .bss : {
+    .bss : AT(LOADADDR(.data) + SIZEOF(.data)) {
         *(.bss.stack)
         sbss_clear = .;
         *(.sbss .bss .bss.*)
@@ -43,5 +50,5 @@ SECTIONS
     }
 
     . = ALIGN(4K);
-    PROVIDE(__memory_start = .);
+    PROVIDE(__memory_start = LOADADDR(.bss) + SIZEOF(.bss));
 }

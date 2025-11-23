@@ -12,6 +12,7 @@ SRC:=core/riscv64/bootstrap.S\
      core/riscv64/timer.c\
      core/riscv64/vm/vm.c\
      core/riscv64/trap.S\
+     core/riscv64/trampoline.S\
      core/riscv64/trap_handler.c
 
 ELF:=kernel.elf
