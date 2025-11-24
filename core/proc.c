@@ -4,12 +4,11 @@
 #include <stddef.h>
 #include <mm/buddy.h>
 #include <riscv64/vm/vm.h>
+#include <riscv64/isa.h>
 #include <drivers/uart.h>
 #include <mem.h>
 
 #define ALIGNUP(data, align) (((data) + (align) - 1) & ~((align) - 1))
-
-
 
 struct process_node *process_list;
 
@@ -18,6 +17,18 @@ void process_create(uint64_t address)
 	struct process_node *node = mm_alloc(sizeof(struct process_node));
 	node->proc.page_table = vm_create_page_table();
 
+	void *kernel_stack = mm_alloc_pages(1);
+	node->proc.frame.kernel_sp = (uint64_t)kernel_stack + VM_PAGE_SIZE;
+
+	size_t table = vm_get_phys(kernel_pt, (size_t)node->proc.page_table);
+	node->proc.satp = RISCV_MAKE_SATP(table, RISCV_SATP_SV48);
+
+	for (size_t i=0x80000000; i < 0xC0000000; i+=0x1000) {
+		vm_mmap(node->proc.page_table, 0xffffffff00000000 + i, i, VM_PTE_VALID | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_EXEC);
+	}
+
+	vm_mmap(node->proc.page_table, 0x10000000, 0x10000000, VM_PTE_VALID | VM_PTE_USER | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_EXEC);
+
 	elf_header_t *header = (elf_header_t *) address;
 
 	if (!ELF_CHECK_MAGIC(&(header->magic)))
@@ -25,6 +36,7 @@ void process_create(uint64_t address)
 
 	elf_program_header_t *p_headers = (elf_program_header_t *)((char *)header + header->p_header);
 
+	node->proc.frame.pc = header->entry;
 	for (uint32_t i = 0; i < header->ph_num; i++) {
 		elf_program_header_t *ph = &p_headers[i];
 
@@ -62,6 +74,19 @@ void process_create(uint64_t address)
 			}
 		}
 	}
+
+	size_t stack_pages = 4;
+	void *stack_backing = mm_alloc_pages(stack_pages);
+	uint64_t user_stack_top = 0x40000000;
+	uint64_t user_stack_base = user_stack_top - (stack_pages * VM_PAGE_SIZE);
+	for (size_t p = 0; p < stack_pages; p++) {
+		uint64_t va = user_stack_base + (p * VM_PAGE_SIZE);
+		uint64_t pa = vm_get_phys(kernel_pt, (uint64_t)stack_backing) + (p * VM_PAGE_SIZE);
+		vm_mmap(node->proc.page_table, va, pa, VM_PTE_VALID | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_USER);
+	}
+	node->proc.frame.sp = user_stack_top;
+
+	node->proc.frame.sstatus = (1 << 5) | (1 << 18);
 
 	node->next = process_list;
 	process_list = node;

@@ -1,5 +1,7 @@
 #include <riscv64/timer.h>
 #include <riscv64/isa.h>
+#include <drivers/uart.h>
+#include <sched.h>
 
 uint64_t timer_interval;
 
@@ -14,5 +16,7 @@ void timer_init(void)
 
 void timer_handle_interrupt(void)
 {
+	uart_puts("timer\n");
 	riscv_sbi_set_timer(riscv_get_time() + timer_interval);
+	sched_tick();
 }

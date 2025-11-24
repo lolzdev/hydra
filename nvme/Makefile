@@ -2,7 +2,7 @@ include ../config.mk
 
 SRC:=main.c
 
-ELF:=vfs
+ELF:=nvme
 OBJS:=$(SRC:.c=.o)
 
 .PHONY: all

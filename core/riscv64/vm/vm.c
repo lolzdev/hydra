@@ -5,7 +5,6 @@
 
 uint64_t *kernel_pt;
 
-#define HH_MASK 0xffffffff00000000UL
 
 static void zero(void *ptr, size_t size)
 {

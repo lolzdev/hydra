@@ -112,7 +112,7 @@ int main(void)
 	int a = 0; 
 
 	while (1) {
-		uart_printf("Proc A: Value = %d\n", a);
+		uart_printf("Proc B: Value = %d\n", a);
 		a++;
 
 		delay(1000000); 

@@ -13,6 +13,7 @@ SRC:=core/riscv64/bootstrap.S\
      core/riscv64/vm/vm.c\
      core/riscv64/trap.S\
      core/riscv64/trampoline.S\
+     core/riscv64/context_switch.S\
      core/riscv64/trap_handler.c
 
 ELF:=kernel.elf
@@ -43,14 +44,19 @@ debug: $(ELF)
 	qemu-system-riscv64 -m 2G -M virt -nographic -kernel kernel.elf -s -S
 
 .PHONY: initrd
-initrd:
+initrd: libc
 	@make -C vfs
+	@make -C nvme
 	@mkdir initrd
-	@cp vfs/vfs initrd/
-	tar -cf initramfs.tar -C initrd/ vfs
+	@cp vfs/vfs nvme/nvme initrd/
+	tar -cf initramfs.tar -C initrd/ vfs nvme
 	@rm -rf initrd
 	$(CC) -c ramdisk.S -o ramdisk.o
 	@rm -rf initramfs.tar
+
+.PHONY: libc
+libc:
+	@make -C libc
 
 %.o: %.c
 	$(CC) $(CFLAGS) -Icore/include -c $< -o $@

@@ -1,14 +1,25 @@
 #include <drivers/uart.h>
 #include <riscv64/isa.h>
 #include <riscv64/timer.h>
+#include <riscv64/vm/vm.h>
 
 #define INTERRUPT_MASK (1L << 63)
 
 void trap_handler()
 {
+	uint64_t satp = 0;
+	__asm__ volatile("csrr %0, satp" : "=r"(satp) :);
+	vm_load_page_table(kernel_pt);
 	uint64_t scause = riscv_get_scause();
+	uint64_t stval = 0;
+	uint64_t sepc = 0;
+	__asm__ volatile("csrr %0, stval" : "=r"(stval) :);
+	__asm__ volatile("csrr %0, sepc" : "=r"(sepc) :);
 	uint64_t interrupt = scause >> 63;
 	uint64_t exception = scause & ~INTERRUPT_MASK;
+	uart_printf("stval: 0x%x\n", stval);
+	uart_printf("sepc: 0x%x\n", sepc);
+	uart_printf("satp: 0x%x\n", satp);
 
 	if (interrupt) {
 		switch(exception) {
@@ -68,4 +79,6 @@ void trap_handler()
 		}
 		while (1);
 	}
+
+	__asm__ volatile("sret");
 }

@@ -29,6 +29,13 @@ static inline uint64_t riscv_get_sstatus(void)
 	return sstatus;
 }
 
+static inline uint64_t riscv_get_stval(void)
+{
+	uint64_t stval = 0;
+	__asm__ volatile("csrr %0, stval" : "=r"(stval) :);
+	return stval;
+}
+
 static inline uint64_t riscv_get_scause(void)
 {
 	uint64_t scause = 0;

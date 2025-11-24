@@ -39,18 +39,23 @@ struct frame {
 	uint64_t a5;
 	uint64_t a6;
 	uint64_t a7;
+
+	uint64_t pc;
+	uint64_t kernel_sp;
+	uint64_t sstatus;
 };
 
 struct process {
-	uint64_t *page_table;
-	uint16_t id;
 	struct frame frame;
-};
+	uint64_t *page_table;
+	uint64_t satp;
+	uint16_t id;
+} __attribute__((packed));
 
 struct process_node {
 	struct process proc;
 	struct process_node *next;
-};
+} __attribute__((packed));
 
 void process_create(uint64_t address);
 void process_kill(uint16_t id);
