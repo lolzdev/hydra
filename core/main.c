@@ -10,21 +10,36 @@ extern void trap_handler(void);
 extern void kernel_init(void);
 extern void sched_start(void);
 
-
 void kmain(uint64_t hart_id, uint64_t device_tree)
 {
-	(void)hart_id;
 	(void)device_tree;
 	
 	uart_puts("Booting hydra...\n");
 	riscv_set_stvec((uint64_t)&trap_handler);
 	buddy_init();
 	vm_init();
-	vm_load_page_table(kernel_pt);
-	uart_puts("Paging enabled\n");
+
+	for (size_t i=0; i < 10; i++) {
+		if (i == hart_id) continue;
+		if (riscv_sbi_probe_hart(i) < 0) continue;
+		uart_printf("found: %d\n", i);
+
+		void *hart_stack = mm_alloc_pages(4);
+		uint64_t hart_stack_top = (uint64_t)hart_stack + (VM_PAGE_SIZE * 4);
+
+		riscv_sbi_wake_up(i, hart_stack_top);
+	}
+
+	vm_load_page_table(kernel_pt.page_table);
 	kernel_init();
 	sched_init();
 
 	timer_init();
 	riscv_enable_interrupts();
+}
+
+void kmain_smp(void)
+{
+	//uart_printf("henlo from smp\n");
+	vm_load_page_table(kernel_pt.page_table);
 }

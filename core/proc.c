@@ -30,7 +30,7 @@ void process_create(uint64_t address)
 	node->proc.frame.kernel_sp = (uint64_t)kernel_stack + VM_PAGE_SIZE;
 
 	/* Prepare the value that the satp register assumes when jumping to this process. */
-	size_t table = vm_get_phys(kernel_pt, (size_t)node->proc.page_table);
+	size_t table = vm_get_phys(kernel_pt.page_table, (size_t)node->proc.page_table);
 	node->proc.satp = RISCV_MAKE_SATP(table, RISCV_SATP_SV48);
 
 	/* Map the kernel code in the higher half of the address space inside the process page table. */
@@ -81,7 +81,7 @@ void process_create(uint64_t address)
 			for (size_t p = 0; p < pages; p++) {
 				uint64_t current_vaddr = vaddr_page + (p * VM_PAGE_SIZE);
 
-				uint64_t current_phys = vm_get_phys(kernel_pt, (uint64_t)kernel_backing) + (p * VM_PAGE_SIZE);
+				uint64_t current_phys = vm_get_phys(kernel_pt.page_table, (uint64_t)kernel_backing) + (p * VM_PAGE_SIZE);
 
 				vm_mmap(node->proc.page_table, current_vaddr, current_phys, flags); 
 			}
@@ -95,7 +95,7 @@ void process_create(uint64_t address)
 	uint64_t user_stack_base = user_stack_top - (stack_pages * VM_PAGE_SIZE);
 	for (size_t p = 0; p < stack_pages; p++) {
 		uint64_t va = user_stack_base + (p * VM_PAGE_SIZE);
-		uint64_t pa = vm_get_phys(kernel_pt, (uint64_t)stack_backing) + (p * VM_PAGE_SIZE);
+		uint64_t pa = vm_get_phys(kernel_pt.page_table, (uint64_t)stack_backing) + (p * VM_PAGE_SIZE);
 		vm_mmap(node->proc.page_table, va, pa, VM_PTE_VALID | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_USER);
 	}
 	node->proc.frame.sp = user_stack_top;
@@ -149,7 +149,7 @@ uint16_t process_fork(struct process *proc)
 	node->proc.frame.kernel_sp = (uint64_t)kernel_stack + VM_PAGE_SIZE;
 
 	/* Prepare the value that the satp register assumes when jumping to this process. */
-	size_t table = vm_get_phys(kernel_pt, (size_t)node->proc.page_table);
+	size_t table = vm_get_phys(kernel_pt.page_table, (size_t)node->proc.page_table);
 	node->proc.satp = RISCV_MAKE_SATP(table, RISCV_SATP_SV48);
 
 	uint64_t *parent_pt = proc->page_table;

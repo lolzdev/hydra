@@ -2,6 +2,7 @@
 #define VM_H
 #include <stdint.h>
 #include <stddef.h>
+#include <spinlock.h>
 
 #define VM_PAGE_SIZE 0x1000
 #define HH_MASK 0xffffffff00000000UL
@@ -12,7 +13,12 @@
 #define VM_PTE_EXEC 0x1 << 3
 #define VM_PTE_USER 0x1 << 4
 
-extern uint64_t *kernel_pt;
+struct kernel_pt {
+	uint64_t *page_table;
+	struct spinlock lock;
+} __attribute__((packed));
+
+extern struct kernel_pt kernel_pt;
 
 /*
  * Create the kernel page table making sure of

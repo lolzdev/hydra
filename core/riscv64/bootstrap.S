@@ -6,6 +6,13 @@ _entry:
 loop:
 	j loop
 
+.globl _smp_entry
+_smp_entry:
+	mv sp, a1
+	mv tp, a0
+	call kmain_smp
+
+	j loop
 .section .bss.stack
 .align 12
 .globl boot_stack

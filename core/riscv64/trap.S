@@ -2,7 +2,6 @@
 .align 4
 .globl trap_entry
 .extern current_proc
-.extern kernel_pt
 /*
  * When in user mode, traps are handled
  * by this procedure.

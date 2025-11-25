@@ -68,15 +68,19 @@ static inline uint64_t riscv_get_time(void)
 
 /* SBI specific functions */
 struct sbiret {
-	uint64_t error;
+	int64_t error;
 	uint64_t value;
 };
 
 struct sbiret riscv_sbi_call(uint64_t ext, uint64_t fid, uint64_t arg0, uint64_t arg1, uint64_t arg2);
 
+int8_t riscv_sbi_probe_hart(uint64_t hartid);
+
 static inline void riscv_sbi_set_timer(uint64_t time)
 {
 	riscv_sbi_call(0x54494D45, 0, time, 0, 0);
 }
+
+void riscv_sbi_wake_up(uint64_t hartid, uint64_t stack_top);
 
 #endif

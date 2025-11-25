@@ -4,7 +4,7 @@
 #include <riscv64/isa.h>
 #include <mem.h>
 
-uint64_t *kernel_pt;
+struct kernel_pt kernel_pt;
 
 static void zero(void *ptr, size_t size)
 {
@@ -15,18 +15,18 @@ static void zero(void *ptr, size_t size)
 
 void vm_init(void)
 {
-	kernel_pt = vm_create_page_table();
+	kernel_pt.page_table = vm_create_page_table();
 
 	/*
 	 * Map the physical addresses from 0x80000000
 	 * to 0xC0000000 in the respective higher half.
 	 */
 	for (size_t i=0x80000000; i < 0xC0000000; i+=0x1000) {
-		vm_mmap(kernel_pt, 0xffffffff00000000 + i, i, VM_PTE_VALID | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_EXEC);
+		vm_mmap(kernel_pt.page_table, 0xffffffff00000000 + i, i, VM_PTE_VALID | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_EXEC);
 	}
 
 	/* Identity map the UART MMIO register */
-	vm_mmap(kernel_pt, 0x10000000, 0x10000000, VM_PTE_VALID | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_EXEC);
+	vm_mmap(kernel_pt.page_table, 0x10000000, 0x10000000, VM_PTE_VALID | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_EXEC);
 
 	uart_puts("Virtual memory initialized.\n");
 }
@@ -34,7 +34,7 @@ void vm_init(void)
 void vm_load_page_table(uint64_t *pt)
 {
 	/* The satp CSR requires the page table address to be physical */
-	size_t table = vm_get_phys(kernel_pt, (size_t)pt);
+	size_t table = vm_get_phys(kernel_pt.page_table, (size_t)pt);
 	riscv_set_satp(RISCV_MAKE_SATP(table, RISCV_SATP_SV48));
 }
 
@@ -112,7 +112,7 @@ void vm_copy(uint64_t *dest, uint64_t *source)
 									uint64_t kernel_address = ((pte >> 10) << 12);
 									kernel_address |= HH_MASK;
 									uint64_t allocated_page = (uint64_t)mm_alloc_pages(1);
-									layer0_dest[vpn0] = (((vm_get_phys(kernel_pt, allocated_page)) >> 12) << 10) | (pte & 0xff);
+									layer0_dest[vpn0] = (((vm_get_phys(kernel_pt.page_table, allocated_page)) >> 12) << 10) | (pte & 0xff);
 									memcpy((void *)allocated_page, (void *)kernel_address, VM_PAGE_SIZE);
 								} else {
 									layer0_dest[vpn0] = pte;
