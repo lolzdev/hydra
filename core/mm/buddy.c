@@ -1,3 +1,9 @@
+/*
+ * Buddy memory allocator. The algorithm is described in
+ * Knuth, D. E. (1997). The Art of Computer Programming:
+ * Fundamental Algorithms, Volume 1. Addison-Wesley Professional.
+ */
+
 #include <mm/buddy.h>
 #include <drivers/uart.h>
 
@@ -11,12 +17,19 @@ struct block {
 	size_t level;
 };
 
+/* Provided by the linker */
 extern unsigned char __memory_start[];
+/*
+ * Array of linked lists. Each linked list
+ * contains all the blocks available for
+ * allocation at a given level.
+ */
 static struct block *freelist[MAX_LEVEL+1];
 
 void buddy_init(void)
 {
 	size_t ram_base = (size_t)__memory_start;
+	/* Currently the memory has a fixed size, should be changed */
 	size_t ram_size = 128 * 1024 * 1024;
 	size_t memory_end = ram_base + ram_size;
 
@@ -39,6 +52,9 @@ void mm_free_range(void *start, size_t size)
 	size_t current_addr = (size_t)start;
 	size_t end_addr = current_addr + size;
 
+	/*
+	 * Create new blocks to cover all the available memory.
+	 */
 	while (current_addr + LEVEL_SIZE(0) <= end_addr) {
 		uint8_t level = MAX_LEVEL;
 		while (level > 0) {
@@ -101,6 +117,10 @@ void mm_split(struct block *b)
 	freelist[b->level] = buddy;
 }
 
+/*
+ * Merge block `b` with its buddy. Return 1
+ * if the merge was successful, 0 otherwise.
+ */
 uint8_t mm_merge(struct block *b)
 {
 	struct block *buddy = mm_buddy(b);
@@ -135,8 +155,13 @@ uint8_t mm_merge(struct block *b)
 
 void mm_free_block(void *addr, uint8_t level)
 {
+	/* Create a new block to represent the free space */
 	struct block *b = mm_create_block((size_t)addr, level);
 	
+	/* 
+	 * Merge the block with its buddy until there is
+	 * no free block anymore.
+	 */
 	uint8_t result = mm_merge(b);
 	while (result) {
 		result = mm_merge(b);
@@ -189,7 +214,8 @@ void *mm_alloc_pages(size_t size)
 	uint8_t level = 0;
 	while ((size * PAGE_SIZE) > (size_t)LEVEL_SIZE(level)) level++;
 
-	/* In this case, no free block was found, we can assume
+	/* 
+	 * In this case, no free block was found, we can assume
 	 * that the memory is full.
 	 */
 	if (level > MAX_LEVEL) return 0x0;

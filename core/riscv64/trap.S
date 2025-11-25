@@ -3,10 +3,17 @@
 .globl trap_entry
 .extern current_proc
 .extern kernel_pt
+/*
+ * When in user mode, traps are handled
+ * by this procedure.
+ */
 trap_entry:
+	/* Save the a0 register for later in sscratch */
 	csrw sscratch, a0
+	/* Load the current running process defined in core/sched.c in a0 */
 	ld a0, current_proc
 
+	/* Save all registers in the process structure. */
 	sd ra, 0(a0)
 	sd sp, 8(a0)
 	sd gp, 16(a0)
@@ -38,19 +45,25 @@ trap_entry:
 	sd a6, 232(a0)
 	sd a7, 240(a0)
 
+	/* Save the status flags. */
 	csrr t0, sstatus
 	sd t0, 264(a0)
 
+	/* Save the program counter to restore execution later. */
 	csrr t0, sepc
 	sd t0, 248(a0)
 
+	/* Restore and save the a0 register as well. */
 	csrr t1, sscratch
 	sd t1, 184(a0)
 
+	/* Load the kernel stack pointer */
 	ld sp, 256(a0)   
 
+	/* Call the trap handler defined in core/riscv64/trap_handler.c */
 	call trap_handler
 
+	/* This is the same procedure as before but instead of saving the registers, they get loaded. */
 	ld a0, current_proc
 
 	ld t0, 280(a0)
@@ -96,4 +109,5 @@ trap_entry:
 
 	ld a0, 184(a0)
 
+	/* Return to user mode after the process state is restored */
 	sret

@@ -15,25 +15,34 @@ struct process_node *process_list;
 void process_create(uint64_t address)
 {
 	struct process_node *node = mm_alloc(sizeof(struct process_node));
+	/* Create a new page table for the process. */
 	node->proc.page_table = vm_create_page_table();
 
+	/* Allocate a stack for the kernel when an interrupt occurs. */
 	void *kernel_stack = mm_alloc_pages(1);
 	node->proc.frame.kernel_sp = (uint64_t)kernel_stack + VM_PAGE_SIZE;
 
+	/* Prepare the value that the satp register assumes when jumping to this process. */
 	size_t table = vm_get_phys(kernel_pt, (size_t)node->proc.page_table);
 	node->proc.satp = RISCV_MAKE_SATP(table, RISCV_SATP_SV48);
 
+	/* Map the kernel code in the higher half of the address space inside the process page table. */
 	for (size_t i=0x80000000; i < 0xC0000000; i+=0x1000) {
 		vm_mmap(node->proc.page_table, 0xffffffff00000000 + i, i, VM_PTE_VALID | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_EXEC);
 	}
 
-	vm_mmap(node->proc.page_table, 0x10000000, 0x10000000, VM_PTE_VALID | VM_PTE_USER | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_EXEC);
+	/* Map the UART MMIO register. This should be removed. */
+	vm_mmap(node->proc.page_table, 0x10000000, 0x10000000, VM_PTE_VALID | VM_PTE_USER | VM_PTE_READ | VM_PTE_WRITE);
 
+	/*
+	 * This part of the code parses the ELF file, allocating space in memory
+	 * for the process code and data, mapping all of it in the lower half of
+	 * the address space. Refer to https://en.wikipedia.org/wiki/Executable_and_Linkable_Format
+	 * for the ELF specification and core/include/elf.h
+	 */
 	elf_header_t *header = (elf_header_t *) address;
-
 	if (!ELF_CHECK_MAGIC(&(header->magic)))
 		uart_puts("Invalid ELF executable!\n");
-
 	elf_program_header_t *p_headers = (elf_program_header_t *)((char *)header + header->p_header);
 
 	node->proc.frame.pc = header->entry;
@@ -75,6 +84,7 @@ void process_create(uint64_t address)
 		}
 	}
 
+	/* Create a stack for the process. */
 	size_t stack_pages = 4;
 	void *stack_backing = mm_alloc_pages(stack_pages);
 	uint64_t user_stack_top = 0x40000000;
@@ -86,14 +96,17 @@ void process_create(uint64_t address)
 	}
 	node->proc.frame.sp = user_stack_top;
 
+	/* Set the status flags. */
 	node->proc.frame.sstatus = (1 << 5) | (1 << 18);
 
+	/* Add the process to the linked list of running processes. */
 	node->next = process_list;
 	process_list = node;
 }
 
 void process_kill(uint16_t id)
 {
+	/* TODO: free process resources when killing it. */
 	struct process_node *node = process_list;
 	struct process_node *prev = NULL;
 	while (node != NULL) {

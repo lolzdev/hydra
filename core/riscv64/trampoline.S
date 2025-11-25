@@ -5,6 +5,11 @@ global_pt_l2:
 
 .section .text.trampoline
 .global _start
+/* When the kernel starts, it expects to be located in the
+ * higher half of the address space. This sets up a basic
+ * page table in Sv39 mode mapping the kernel code in
+ * higher half.
+ */
 _start:
 	lla t0, global_pt_l2
 

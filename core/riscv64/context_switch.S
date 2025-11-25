@@ -4,6 +4,11 @@
 .extern trap_entry
 .extern uart_puts
 
+/* 
+ * This function restores a process state and jumps to it in user mode.
+ * The concept behind it is the same of `trap_entry` defined in
+ * core/riscv64/trap.S
+ */
 /* void user_jump(struct frame *proc_frame, uint64_t *proc_table) */
 user_jump:
 	ld ra, 0(a0)
