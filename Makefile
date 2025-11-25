@@ -39,10 +39,10 @@ clean:
 
 .PHONY: qemu
 qemu: $(ELF)
-	qemu-system-riscv64 -smp 1 -m 2G -M virt -nographic -kernel kernel.elf
+	qemu-system-riscv64 -smp 3 -m 2G -M virt -nographic -kernel kernel.elf -d int,in_asm -D qemu.log
 .PHONY: debug 
 debug: $(ELF)
-	qemu-system-riscv64 -smp 1 -m 2G -M virt -nographic -kernel kernel.elf -s -S
+	qemu-system-riscv64 -smp 3 -m 2G -M virt -nographic -kernel kernel.elf -s -S
 
 .PHONY: initrd
 initrd: libc

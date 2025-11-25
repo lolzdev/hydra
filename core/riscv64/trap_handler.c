@@ -22,7 +22,6 @@ void trap_handler(void)
 	__asm__ volatile("csrr %0, sepc" : "=r"(sepc) :);
 	uint64_t interrupt = scause >> 63;
 	uint64_t exception = scause & ~INTERRUPT_MASK;
-	uart_printf("stval: 0x%x\nsepc: 0x%x\n", stval, sepc);
 
 	if (interrupt) {
 		switch(exception) {

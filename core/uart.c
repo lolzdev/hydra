@@ -1,12 +1,16 @@
 #include <drivers/uart.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <spinlock.h>
 
+static struct spinlock lock;
 static volatile char *uart = (char *) UART_BASE;
 
 void uart_putc(char c)
 {
+	spinlock_aquire(&lock);
 	uart[0] = c;
+	spinlock_release(&lock);
 }
 
 void uart_puts(char *s)

@@ -9,17 +9,13 @@ struct spinlock {
 
 static void spinlock_aquire(struct spinlock *lock)
 {
+	while (lock->locked);
 	lock->locked = 1;
 }
 
 static void spinlock_release(struct spinlock *lock)
 {
 	lock->locked = 0;
-}
-
-static void spinlock_wait(struct spinlock *lock)
-{
-	while (lock->locked);
 }
 
 #endif
