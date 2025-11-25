@@ -22,6 +22,11 @@ static inline void riscv_set_sstatus(uint64_t sstatus)
 	__asm__ volatile("csrs sstatus, %0" : : "r"(sstatus));
 }
 
+static inline void riscv_set_sepc(uint64_t sepc)
+{
+	__asm__ volatile("csrs sepc, %0" : : "r"(sepc));
+}
+
 static inline uint64_t riscv_get_sstatus(void)
 {
 	uint64_t sstatus = 0;

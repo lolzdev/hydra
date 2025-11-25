@@ -68,7 +68,6 @@ trap_entry:
 
 	ld t0, 280(a0)
 	csrw satp, t0
-	sfence.vma zero, zero
 
 	ld t0, 248(a0)
 	csrw sepc, t0

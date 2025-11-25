@@ -2,6 +2,7 @@
 #include <mm/buddy.h>
 #include <drivers/uart.h>
 #include <riscv64/isa.h>
+#include <mem.h>
 
 uint64_t *kernel_pt;
 
@@ -35,7 +36,6 @@ void vm_load_page_table(uint64_t *pt)
 	/* The satp CSR requires the page table address to be physical */
 	size_t table = vm_get_phys(kernel_pt, (size_t)pt);
 	riscv_set_satp(RISCV_MAKE_SATP(table, RISCV_SATP_SV48));
-	vm_reload();
 }
 
 uint64_t *vm_create_page_table(void)
@@ -77,6 +77,53 @@ void vm_mmap(uint64_t *table, size_t virtual, size_t physical, uint64_t flags)
 	uint64_t pte = ((physical >> 12) << 10) | (flags & 0xff);
 
 	layer0[vpn0] = pte;
+}
+
+void vm_copy(uint64_t *dest, uint64_t *source)
+{
+	for (size_t vpn3 = 0; vpn3 < 512; vpn3++) {
+		/* If a table level is present, copy it. */
+		if (source[vpn3]) {
+			uint64_t address = (uint64_t)mm_alloc(sizeof(uint64_t) * 512);
+			dest[vpn3] = (((address - HH_MASK) >> 12) << 10) | VM_PTE_VALID;
+			zero((void *)address, sizeof(uint64_t) * 512);
+
+			uint64_t *layer2 = (uint64_t *) ((((source[vpn3] >> 10) << 12)) | HH_MASK);
+			uint64_t *layer2_dest = (uint64_t *) ((((dest[vpn3] >> 10) << 12)) | HH_MASK);
+			for (size_t vpn2 = 0; vpn2 < 512; vpn2++) {
+				if (layer2[vpn2]) {
+					uint64_t address = (uint64_t)mm_alloc(sizeof(uint64_t) * 512);
+					layer2_dest[vpn2] = (((address - HH_MASK) >> 12) << 10) | VM_PTE_VALID;
+					zero((void *)address, sizeof(uint64_t) * 512);
+					
+					uint64_t *layer1 = (uint64_t *) (((layer2[vpn2] >> 10) << 12) | HH_MASK);
+					uint64_t *layer1_dest = (uint64_t *) (((layer2_dest[vpn2] >> 10) << 12) | HH_MASK);
+					for (size_t vpn1 = 0; vpn1 < 512; vpn1++) {
+						if (layer1[vpn1]) {
+							uint64_t address = (uint64_t)mm_alloc(sizeof(uint64_t) * 512);
+							layer1_dest[vpn1] = (((address - HH_MASK) >> 12) << 10) | VM_PTE_VALID;
+							zero((void *)address, sizeof(uint64_t) * 512);
+
+							uint64_t *layer0 = (uint64_t *) (((layer1[vpn1] >> 10) << 12) | HH_MASK);
+							uint64_t *layer0_dest = (uint64_t *) (((layer1_dest[vpn1] >> 10) << 12) | HH_MASK);
+							for (size_t vpn0 = 0; vpn0 < 512; vpn0++) {
+								uint64_t pte = layer0[vpn0];
+								if (pte & VM_PTE_WRITE && vpn3 < 256) {
+									uint64_t kernel_address = ((pte >> 10) << 12);
+									kernel_address |= HH_MASK;
+									uint64_t allocated_page = (uint64_t)mm_alloc_pages(1);
+									layer0_dest[vpn0] = (((vm_get_phys(kernel_pt, allocated_page)) >> 12) << 10) | (pte & 0xff);
+									memcpy((void *)allocated_page, (void *)kernel_address, VM_PAGE_SIZE);
+								} else {
+									layer0_dest[vpn0] = pte;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 uint64_t vm_get_phys(uint64_t *table, size_t virtual)

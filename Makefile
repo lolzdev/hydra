@@ -14,7 +14,8 @@ SRC:=core/riscv64/bootstrap.S\
      core/riscv64/trap.S\
      core/riscv64/trampoline.S\
      core/riscv64/context_switch.S\
-     core/riscv64/trap_handler.c
+     core/riscv64/trap_handler.c\
+     core/riscv64/syscall.c
 
 ELF:=kernel.elf
 BIN:=kernel.bin
@@ -59,7 +60,7 @@ libc:
 	@make -C libc
 
 %.o: %.c
-	$(CC) $(CFLAGS) -Icore/include -c $< -o $@
+	$(CC) $(CFLAGS) -fanalyzer -Icore/include -c $< -o $@
 
 %.o: %.S
 	$(CC) $(CFLAGS) -c $< -o $@

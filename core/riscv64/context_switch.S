@@ -56,6 +56,5 @@ user_jump:
 	csrw satp, a1
 	ld a1, 192(a0)
 	ld a0, 184(a0)
-	sfence.vma zero, zero
 
 	sret

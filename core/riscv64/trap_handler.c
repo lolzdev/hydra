@@ -2,10 +2,15 @@
 #include <riscv64/isa.h>
 #include <riscv64/timer.h>
 #include <riscv64/vm/vm.h>
+#include <sched.h>
+#include <proc.h>
+
+extern void syscall_handle(struct frame *frame);
+extern struct process_node *current_proc;
 
 #define INTERRUPT_MASK (1L << 63)
 
-void trap_handler()
+void trap_handler(void)
 {
 	uint64_t satp = 0;
 	__asm__ volatile("csrr %0, satp" : "=r"(satp) :);
@@ -17,15 +22,10 @@ void trap_handler()
 	__asm__ volatile("csrr %0, sepc" : "=r"(sepc) :);
 	uint64_t interrupt = scause >> 63;
 	uint64_t exception = scause & ~INTERRUPT_MASK;
-	uart_printf("stval: 0x%x\n", stval);
-	uart_printf("sepc: 0x%x\n", sepc);
-	uart_printf("satp: 0x%x\n", satp);
+	//uart_printf("stval: 0x%x\nsepc: 0x%x\n", stval, sepc);
 
 	if (interrupt) {
 		switch(exception) {
-		case 1:
-			uart_puts("Syscall\n");
-			break;
 		case 5:
 			timer_handle_interrupt();
 			break;
@@ -60,7 +60,9 @@ void trap_handler()
 			uart_puts("Store access fault\n");
 			break;
 		case 8:
-			uart_puts("Environment call from userspace\n");
+			syscall_handle(&current_proc->proc.frame);
+			current_proc->proc.frame.pc += 4;
+			sched_tick();
 			break;
 		case 9:
 			uart_puts("Environment call from supervisor\n");

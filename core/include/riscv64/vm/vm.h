@@ -42,5 +42,7 @@ void vm_reload(void);
 uint64_t vm_get_phys(uint64_t *table, size_t virtual);
 /* Allocate a new page table. */
 uint64_t *vm_create_page_table(void);
+/* Copy page table `source` to page table `dest` */
+void vm_copy(uint64_t *dest, uint64_t *source);
 
 #endif

@@ -15,6 +15,13 @@ struct process_node *process_list;
 void process_create(uint64_t address)
 {
 	struct process_node *node = mm_alloc(sizeof(struct process_node));
+	/* Assign process ID. */
+	if (process_list) {
+		node->proc.id = process_list->proc.id + 1;
+	} else {
+		node->proc.id = 0;
+	}
+
 	/* Create a new page table for the process. */
 	node->proc.page_table = vm_create_page_table();
 
@@ -30,9 +37,6 @@ void process_create(uint64_t address)
 	for (size_t i=0x80000000; i < 0xC0000000; i+=0x1000) {
 		vm_mmap(node->proc.page_table, 0xffffffff00000000 + i, i, VM_PTE_VALID | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_EXEC);
 	}
-
-	/* Map the UART MMIO register. This should be removed. */
-	vm_mmap(node->proc.page_table, 0x10000000, 0x10000000, VM_PTE_VALID | VM_PTE_USER | VM_PTE_READ | VM_PTE_WRITE);
 
 	/*
 	 * This part of the code parses the ELF file, allocating space in memory
@@ -125,4 +129,39 @@ void process_kill(uint16_t id)
 		prev = node;
 		node = node->next;
 	}
+}
+
+uint16_t process_fork(struct process *proc)
+{
+	struct process_node *node = mm_alloc(sizeof(struct process_node));
+	/* Assign process ID. */
+	if (process_list) {
+		node->proc.id = process_list->proc.id + 1;
+	} else {
+		node->proc.id = 0;
+	}
+
+	/* Create a new page table for the process. */
+	node->proc.page_table = vm_create_page_table();
+
+	/* Allocate a stack for the kernel when an interrupt occurs. */
+	void *kernel_stack = mm_alloc_pages(1);
+	node->proc.frame.kernel_sp = (uint64_t)kernel_stack + VM_PAGE_SIZE;
+
+	/* Prepare the value that the satp register assumes when jumping to this process. */
+	size_t table = vm_get_phys(kernel_pt, (size_t)node->proc.page_table);
+	node->proc.satp = RISCV_MAKE_SATP(table, RISCV_SATP_SV48);
+
+	uint64_t *parent_pt = proc->page_table;
+	vm_copy(node->proc.page_table, parent_pt);
+
+	memcpy(&node->proc.frame, &proc->frame, sizeof(struct frame));
+	node->proc.frame.a0 = 0;
+	node->proc.frame.pc += 4;
+
+	/* Add the process to the linked list of running processes. */
+	node->next = process_list;
+	process_list = node;
+
+	return node->proc.id;
 }

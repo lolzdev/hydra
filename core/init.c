@@ -25,7 +25,7 @@ void kernel_init()
 			break;
 		}
 
-		uart_puts((char *)header->name);
+		uart_printf("%s ", (char *)header->name);
 		size_t file_size = oct2int(header->size);
 		uint8_t *data = (uint8_t *) header + sizeof(struct tar_header);
 		

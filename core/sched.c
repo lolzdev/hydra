@@ -21,6 +21,5 @@ void sched_tick(void)
 		current_proc = process_list;
 	}
 
-	uart_puts("sched\n");
 	user_jump(&current_proc->proc.frame, (uint64_t *)RISCV_MAKE_SATP((uint64_t)current_proc->proc.page_table - HH_MASK, RISCV_SATP_SV48));
 }

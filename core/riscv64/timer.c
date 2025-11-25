@@ -16,7 +16,6 @@ void timer_init(void)
 
 void timer_handle_interrupt(void)
 {
-	uart_puts("timer\n");
 	riscv_sbi_set_timer(riscv_get_time() + timer_interval);
 	sched_tick();
 }
