@@ -14,7 +14,7 @@ void kmain(uint64_t hart_id, uint64_t device_tree)
 {
 	(void)device_tree;
 	
-	uart_puts("Booting hydra...\n");
+	uart_puts("\033[2J\033[0;0HBooting hydra...\n");
 	riscv_set_stvec((uint64_t)&kernel_trap_entry);
 	buddy_init();
 	vm_init();
