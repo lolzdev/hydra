@@ -6,6 +6,8 @@
 
 #include <mm/buddy.h>
 #include <drivers/uart.h>
+#include <spinlock.h>
+#include <mem.h>
 
 #define POW2(x) (1 << (x))
 #define LEVEL_SIZE(x) (MIN_BLOCK * POW2(x))
@@ -26,8 +28,11 @@ extern unsigned char __memory_start[];
  */
 static struct block *freelist[MAX_LEVEL+1];
 
+static struct spinlock lock;
+
 void buddy_init(void)
 {
+	lock.locked = 0;
 	size_t ram_base = (size_t)__memory_start;
 	/* Currently the memory has a fixed size, should be changed */
 	size_t ram_size = 128 * 1024 * 1024;
@@ -176,6 +181,7 @@ void *mm_alloc_block(uint8_t level) {
 
 	if (freelist[level] != NULL) {
 		struct block *b = freelist[level];
+		if (b == NULL) return NULL;
 		freelist[level] = b->next;
 		return (void *) b;
 	}
@@ -185,6 +191,7 @@ void *mm_alloc_block(uint8_t level) {
 	for (int i=level; i <= MAX_LEVEL; i++) {
 		if (freelist[i] != NULL) {
 			b = freelist[i];
+			if (b == NULL) continue;
 			freelist[i] = b->next;
 			break;
 		}
@@ -203,10 +210,12 @@ void *mm_alloc_block(uint8_t level) {
 
 void mm_free_pages(void *addr, size_t size)
 {
+	spinlock_aquire(&lock);
 	uint8_t level = 0;
 	while ((size * PAGE_SIZE) > (size_t)LEVEL_SIZE(level)) level++;
 
 	mm_free_block(addr, level);
+	spinlock_release(&lock);
 }
 
 void *mm_alloc_pages(size_t size)
@@ -220,7 +229,12 @@ void *mm_alloc_pages(size_t size)
 	 */
 	if (level > MAX_LEVEL) return 0x0;
 
-	return mm_alloc_block(level);
+	spinlock_aquire(&lock);
+	struct block *b = mm_alloc_block(level);
+	memset(b, 0x0, size * 0x1000);
+	spinlock_release(&lock);
+
+	return b;
 }
 
 void mm_free(void *addr, size_t size)

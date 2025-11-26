@@ -7,20 +7,17 @@
 #include <riscv64/isa.h>
 #include <drivers/uart.h>
 #include <mem.h>
+#include <sched.h>
 
 #define ALIGNUP(data, align) (((data) + (align) - 1) & ~((align) - 1))
 
-struct process_node *process_list;
+extern uint16_t LAST_PID;
 
 void process_create(uint64_t address)
 {
 	struct process_node *node = mm_alloc(sizeof(struct process_node));
 	/* Assign process ID. */
-	if (process_list) {
-		node->proc.id = process_list->proc.id + 1;
-	} else {
-		node->proc.id = 0;
-	}
+	node->proc.id = LAST_PID + 1;
 
 	/* Create a new page table for the process. */
 	node->proc.page_table = vm_create_page_table();
@@ -104,42 +101,20 @@ void process_create(uint64_t address)
 	node->proc.frame.sstatus = (1 << 5) | (1 << 18);
 
 	/* Add the process to the linked list of running processes. */
-	node->next = process_list;
-	process_list = node;
+	sched_add(node);
 }
 
-void process_kill(uint16_t id)
+void process_kill(uint16_t pid)
 {
 	/* TODO: free process resources when killing it. */
-	struct process_node *node = process_list;
-	struct process_node *prev = NULL;
-	while (node != NULL) {
-		if (node->proc.id == id) {
-			if (prev) {
-				prev->next = node->next;
-			} else {
-				process_list = node->next;
-			}
-
-			mm_free(node->proc.page_table, sizeof(uint64_t) * 512);
-			mm_free(node, sizeof(struct process_node));
-			break;
-		}
-		
-		prev = node;
-		node = node->next;
-	}
+	sched_kill(pid);
 }
 
 uint16_t process_fork(struct process *proc)
 {
 	struct process_node *node = mm_alloc(sizeof(struct process_node));
 	/* Assign process ID. */
-	if (process_list) {
-		node->proc.id = process_list->proc.id + 1;
-	} else {
-		node->proc.id = 0;
-	}
+	node->proc.id = LAST_PID + 1;
 
 	/* Create a new page table for the process. */
 	node->proc.page_table = vm_create_page_table();
@@ -160,8 +135,7 @@ uint16_t process_fork(struct process *proc)
 	node->proc.frame.pc += 4;
 
 	/* Add the process to the linked list of running processes. */
-	node->next = process_list;
-	process_list = node;
+	sched_add(node);
 
 	return node->proc.id;
 }

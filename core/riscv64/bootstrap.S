@@ -1,6 +1,7 @@
 .section .text
 .globl _entry
 _entry:
+	mv tp, a0
 	la sp, boot_stack_top
 	call kmain
 loop:

@@ -11,6 +11,8 @@
  */
 /* void user_jump(struct frame *proc_frame, uint64_t *proc_table) */
 user_jump:
+	csrw sscratch, a0
+
 	ld ra, 0(a0)
 	ld gp, 16(a0)
 	ld tp, 24(a0)
@@ -50,10 +52,9 @@ user_jump:
 	csrw sepc, t0
 	ld t0, 32(a0)
 
-	csrw sscratch, sp
-
 	ld sp, 8(a0)
 	csrw satp, a1
+	sfence.vma zero, zero
 	ld a1, 192(a0)
 	ld a0, 184(a0)
 

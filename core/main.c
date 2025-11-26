@@ -14,15 +14,19 @@ void kmain(uint64_t hart_id, uint64_t device_tree)
 {
 	(void)device_tree;
 	
-	uart_puts("\033[2J\033[0;0HBooting hydra...\n");
+	uart_init();
+	//uart_puts("\033[2J\033[0;0HBooting hydra...\n");
+	uart_puts("Booting hydra...\n");
 	riscv_set_stvec((uint64_t)&kernel_trap_entry);
 	buddy_init();
 	vm_init();
 
+	uint16_t cpu_count = 1;
 	for (size_t i=0; i < 10; i++) {
 		if (i == hart_id) continue;
 		if (riscv_sbi_probe_hart(i) < 0) continue;
 
+		cpu_count += 1;
 		void *hart_stack = mm_alloc_pages(4);
 		uint64_t hart_stack_top = (uint64_t)hart_stack + (VM_PAGE_SIZE * 4);
 
@@ -30,8 +34,8 @@ void kmain(uint64_t hart_id, uint64_t device_tree)
 	}
 
 	vm_load_page_table(kernel_pt.page_table);
+	sched_init(cpu_count);
 	kernel_init();
-	sched_init();
 
 	timer_init();
 	riscv_enable_interrupts();
@@ -40,4 +44,7 @@ void kmain(uint64_t hart_id, uint64_t device_tree)
 void kmain_smp(void)
 {
 	vm_load_page_table(kernel_pt.page_table);
+	riscv_set_stvec((uint64_t)&kernel_trap_entry);
+	timer_init();
+	riscv_enable_interrupts();
 }

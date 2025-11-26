@@ -3,7 +3,8 @@
 
 int main(void)
 {
-	__asm__ volatile("ecall");
+	char *msg1 = "Hello world from nvme!\n";
+	__asm__ volatile("mv a1, %0; li a0, 0x1; ecall" : : "r"(msg1));
 	while (1);
 
 	return 0;

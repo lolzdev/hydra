@@ -6,17 +6,22 @@
 static struct spinlock lock;
 static volatile char *uart = (char *) UART_BASE;
 
+void uart_init(void)
+{
+	lock.locked = 0;
+}
+
 void uart_putc(char c)
 {
-	spinlock_aquire(&lock);
 	uart[0] = c;
-	spinlock_release(&lock);
 }
 
 void uart_puts(char *s)
 {
+	spinlock_aquire(&lock);
 	while (*s != 0)
 		uart_putc(*s++);
+	spinlock_release(&lock);
 }
 
 static char *convert(unsigned long num, int base)

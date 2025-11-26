@@ -28,7 +28,7 @@ void vm_init(void)
 	/* Identity map the UART MMIO register */
 	vm_mmap(kernel_pt.page_table, 0x10000000, 0x10000000, VM_PTE_VALID | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_EXEC);
 
-	uart_puts("Virtual memory initialized.\n");
+	uart_printf("Virtual memory initialized with page table 0x%x.\n", kernel_pt.page_table);
 }
 
 void vm_load_page_table(uint64_t *pt)

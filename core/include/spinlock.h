@@ -2,20 +2,20 @@
 #define SPINLOCK_H
 
 #include <stdint.h>
+#include <stdatomic.h>
 
 struct spinlock {
-	volatile uint8_t locked;
+	atomic_bool locked;
 };
 
 static void spinlock_aquire(struct spinlock *lock)
 {
-	while (lock->locked);
-	lock->locked = 1;
+	while (atomic_exchange_explicit(&lock->locked, true, memory_order_acquire));
 }
 
 static void spinlock_release(struct spinlock *lock)
 {
-	lock->locked = 0;
+	atomic_store_explicit(&lock->locked, false, memory_order_release);
 }
 
 #endif

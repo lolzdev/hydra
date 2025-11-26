@@ -1,6 +1,6 @@
 #include <riscv64/isa.h>
 
-extern void smp_entry(void);
+extern void smp_entry(uint64_t hartid);
 
 struct sbiret riscv_sbi_call(uint64_t ext, uint64_t fid, uint64_t arg0, uint64_t arg1, uint64_t arg2)
 {

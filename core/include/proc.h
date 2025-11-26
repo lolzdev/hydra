@@ -43,6 +43,7 @@ struct frame {
 	uint64_t pc;
 	uint64_t kernel_sp;
 	uint64_t sstatus;
+	uint64_t hartid;
 };
 
 struct process {

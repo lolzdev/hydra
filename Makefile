@@ -39,7 +39,7 @@ clean:
 
 .PHONY: qemu
 qemu: $(ELF)
-	qemu-system-riscv64 -smp 3 -m 2G -M virt -nographic -kernel kernel.elf -d int,in_asm -D qemu.log
+	qemu-system-riscv64 -smp 4 -m 2G -M virt -nographic -kernel kernel.elf -d int,in_asm -D qemu.log
 .PHONY: debug 
 debug: $(ELF)
 	qemu-system-riscv64 -smp 3 -m 2G -M virt -nographic -kernel kernel.elf -s -S
