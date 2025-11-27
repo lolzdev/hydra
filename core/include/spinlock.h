@@ -4,18 +4,14 @@
 #include <stdint.h>
 #include <stdatomic.h>
 
-struct spinlock {
-	atomic_bool locked;
-};
+typedef struct {
+	_Atomic int32_t locked;
+	struct cpu *cpu;
+} spinlock;
 
-static void spinlock_aquire(struct spinlock *lock)
-{
-	while (atomic_exchange_explicit(&lock->locked, true, memory_order_acquire));
-}
+#define SPINLOCK_INIT 0
 
-static void spinlock_release(struct spinlock *lock)
-{
-	atomic_store_explicit(&lock->locked, false, memory_order_release);
-}
+void spinlock_acquire(spinlock *lock);
+void spinlock_release(spinlock *lock);
 
 #endif

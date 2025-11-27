@@ -47,6 +47,7 @@ uint64_t *vm_create_page_table(void)
 
 void vm_mmap(uint64_t *table, size_t virtual, size_t physical, uint64_t flags)
 {
+	spinlock_acquire(&kernel_pt.lock);
 	/* Split the virtual address in the 3 needed indices. */
 	uint32_t vpn0 = (virtual >> 12) & 0x1ff;
 	uint32_t vpn1 = (virtual >> 21) & 0x1ff;
@@ -77,10 +78,12 @@ void vm_mmap(uint64_t *table, size_t virtual, size_t physical, uint64_t flags)
 	uint64_t pte = ((physical >> 12) << 10) | (flags & 0xff);
 
 	layer0[vpn0] = pte;
+	spinlock_release(&kernel_pt.lock);
 }
 
 void vm_copy(uint64_t *dest, uint64_t *source)
 {
+	spinlock_acquire(&kernel_pt.lock);
 	for (size_t vpn3 = 0; vpn3 < 512; vpn3++) {
 		/* If a table level is present, copy it. */
 		if (source[vpn3]) {
@@ -112,6 +115,7 @@ void vm_copy(uint64_t *dest, uint64_t *source)
 									uint64_t kernel_address = ((pte >> 10) << 12);
 									kernel_address |= HH_MASK;
 									uint64_t allocated_page = (uint64_t)mm_alloc_pages(1);
+
 									layer0_dest[vpn0] = (((vm_get_phys(kernel_pt.page_table, allocated_page)) >> 12) << 10) | (pte & 0xff);
 									memcpy((void *)allocated_page, (void *)kernel_address, VM_PAGE_SIZE);
 								} else {
@@ -124,6 +128,7 @@ void vm_copy(uint64_t *dest, uint64_t *source)
 			}
 		}
 	}
+	spinlock_release(&kernel_pt.lock);
 }
 
 uint64_t vm_get_phys(uint64_t *table, size_t virtual)
@@ -133,8 +138,11 @@ uint64_t vm_get_phys(uint64_t *table, size_t virtual)
 	uint32_t vpn2 = (virtual >> 30) & 0x1ff;
 	uint32_t vpn3 = (virtual >> 39) & 0x1ff;
 
+	if (table[vpn3] == 0) return 0;
 	uint64_t *layer2 = (uint64_t *) ((((table[vpn3] >> 10) << 12)) | HH_MASK);
+	if (layer2[vpn2] == 0) return 0;
 	uint64_t *layer1 = (uint64_t *) (((layer2[vpn2] >> 10) << 12) | HH_MASK);
+	if (layer1[vpn1] == 0) return 0;
 	uint64_t *layer0 = (uint64_t *) (((layer1[vpn1] >> 10) << 12) | HH_MASK);
 
 	return (layer0[vpn0] >> 10) << 12;

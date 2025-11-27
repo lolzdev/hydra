@@ -5,6 +5,7 @@ _entry:
 	la sp, boot_stack_top
 	call kmain
 loop:
+	wfi
 	j loop
 
 .globl _smp_entry

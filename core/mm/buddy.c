@@ -28,11 +28,12 @@ extern unsigned char __memory_start[];
  */
 static struct block *freelist[MAX_LEVEL+1];
 
-static struct spinlock lock;
+static spinlock lock;
 
 void buddy_init(void)
 {
 	lock.locked = 0;
+	lock.cpu = 0;
 	size_t ram_base = (size_t)__memory_start;
 	/* Currently the memory has a fixed size, should be changed */
 	size_t ram_size = 128 * 1024 * 1024;
@@ -210,7 +211,7 @@ void *mm_alloc_block(uint8_t level) {
 
 void mm_free_pages(void *addr, size_t size)
 {
-	spinlock_aquire(&lock);
+	spinlock_acquire(&lock);
 	uint8_t level = 0;
 	while ((size * PAGE_SIZE) > (size_t)LEVEL_SIZE(level)) level++;
 
@@ -229,10 +230,11 @@ void *mm_alloc_pages(size_t size)
 	 */
 	if (level > MAX_LEVEL) return 0x0;
 
-	spinlock_aquire(&lock);
+	spinlock_acquire(&lock);
 	struct block *b = mm_alloc_block(level);
-	memset(b, 0x0, size * 0x1000);
 	spinlock_release(&lock);
+
+	if (b == NULL) uart_puts("OOM!!!!!!!\n");
 
 	return b;
 }

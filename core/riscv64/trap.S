@@ -61,13 +61,19 @@ trap_entry:
 
 	ld tp, 272(a0)
 
+	la t0, kernel_trap_entry
+	csrw stvec, t0
+
 	/* Call the trap handler defined in core/riscv64/trap_handler.c */
 	call trap_handler
+
+	la t0, trap_entry
+	csrw stvec, t0
 
 	/* This is the same procedure as before but instead of saving the registers, they get loaded. */
 	csrrw a0, sscratch, a0
 
-	ld t0, 280(a0)
+	ld t0, 288(a0)
 	csrw satp, t0
 	sfence.vma zero, zero
 

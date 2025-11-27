@@ -5,9 +5,11 @@
 #include <sched.h>
 #include <proc.h>
 #include <spinlock.h>
+#include <cpu.h>
 
 extern void syscall_handle(struct frame *frame);
 extern struct process_node **current_proc;
+extern struct cpu *CPUS;
 
 #define INTERRUPT_MASK (1L << 63)
 
@@ -15,9 +17,7 @@ void trap_handler(void)
 {
 	uint64_t satp = 0;
 	__asm__ volatile("csrr %0, satp" : "=r"(satp) :);
-	spinlock_aquire(&kernel_pt.lock);
 	vm_load_page_table(kernel_pt.page_table);
-	spinlock_release(&kernel_pt.lock);
 	uint64_t scause = riscv_get_scause();
 	uint64_t stval = 0;
 	uint64_t sepc = 0;
@@ -32,9 +32,13 @@ void trap_handler(void)
 
 	if (interrupt) {
 		switch(exception) {
-		case 5:
-			timer_handle_interrupt();
+		case 1:
+			__asm__ volatile("csrc sip, %0" :: "r"(1 << 1));
 			break;
+		case 5:
+			//uart_printf("timer: %d\n", tp);
+			timer_handle_interrupt();
+			return;
 		default:
 			uart_printf("sp: 0x%x, satp: 0x%x, tp: %d\nsepc: 0x%x\nstval: 0x%x\nscause: 0x%x\n", sp, satp, tp, sepc, stval, scause);
 			uart_puts("Unknown interrupt\n");
@@ -43,6 +47,7 @@ void trap_handler(void)
 	} else {
 		switch(exception) {
 		case 0:
+			uart_printf("sp: 0x%x, satp: 0x%x, tp: %d\nsepc: 0x%x\nstval: 0x%x\nscause: 0x%x\n", sp, satp, tp, sepc, stval, scause);
 			uart_puts("Instruction address misaligned\n");
 			break;
 		case 1:
@@ -50,6 +55,7 @@ void trap_handler(void)
 			break;
 		case 2:
 			uart_puts("Illegal instruction\n");
+				while (1);
 			break;
 		case 3:
 			uart_puts("Breakpoint\n");
@@ -58,6 +64,7 @@ void trap_handler(void)
 			uart_puts("Load address misaligned\n");
 			break;
 		case 5:
+			uart_printf("sp: 0x%x, satp: 0x%x, tp: %d\nsepc: 0x%x\nstval: 0x%x\nscause: 0x%x\n", sp, satp, tp, sepc, stval, scause);
 			uart_puts("Load access fault\n");
 			break;
 		case 6:
@@ -68,7 +75,10 @@ void trap_handler(void)
 			break;
 		case 8:
 			syscall_handle(&current_proc[tp]->proc.frame);
+			uint64_t test = current_proc[tp]->proc.frame.pc;
+			//uart_printf("fork %x\n", &current_proc[tp]->proc.frame.pc);
 			current_proc[tp]->proc.frame.pc += 4;
+			//uart_printf("fork %x\n", test + 4);
 			sched_tick();
 			break;
 		case 9:

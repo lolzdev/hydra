@@ -3,6 +3,7 @@
 #include <drivers/uart.h>
 #include <riscv64/vm/vm.h>
 #include <mm/buddy.h>
+#include <cpu.h>
 
 extern void user_jump(struct frame *proc_frame, uint64_t *page_table);
 struct process_node **process_list;
@@ -11,11 +12,13 @@ uint16_t *process_counts;
 uint16_t LAST_PID = 0;
 static uint16_t CPU_COUNT = 0;
 static uint64_t a = 0;
-static struct spinlock lock;
+static spinlock lock;
+extern struct cpu *CPUS;
 
 void sched_init(uint16_t cpu_count)
 {
 	lock.locked = 0;
+	lock.cpu = 0;
 	CPU_COUNT = cpu_count;
 	process_counts = mm_alloc(sizeof(uint16_t) * cpu_count);
 	process_list = mm_alloc(sizeof(struct process_node *) * cpu_count);
@@ -29,7 +32,7 @@ void sched_init(uint16_t cpu_count)
 
 void sched_add(struct process_node *proc)
 {
-	spinlock_aquire(&lock);
+	spinlock_acquire(&lock);
 	uint16_t best_hart = 0;
 	for (uint16_t i=0; i < CPU_COUNT; i++) {
 		if (process_counts[i] < process_counts[best_hart]) {
@@ -47,12 +50,13 @@ void sched_add(struct process_node *proc)
 	if (!current_proc[best_hart]) {
 		current_proc[best_hart] = process_list[best_hart];
 	}
+
 	spinlock_release(&lock);
 }
 
 void sched_kill(uint16_t pid)
 {
-	spinlock_aquire(&lock);
+	spinlock_acquire(&lock);
 	for (uint16_t i=0; i < CPU_COUNT; i++) {
 		struct process_node *node = process_list[i];
 		struct process_node *prev = NULL;
@@ -79,7 +83,7 @@ found:
 
 void sched_tick(void)
 {
-	spinlock_aquire(&lock);
+	spinlock_acquire(&lock);
 	uint64_t tp = 0;
 	__asm__ volatile("mv %0, tp" : "=r"(tp) :);
 
@@ -96,6 +100,7 @@ void sched_tick(void)
 	//uart_printf("tp: %d\n", tp);
 
 	spinlock_release(&lock);
+	//uart_printf("sched: %d\n", tp);
 
 	user_jump(&current_proc[tp]->proc.frame, (uint64_t *)current_proc[tp]->proc.satp);
 }

@@ -15,7 +15,7 @@
 
 struct kernel_pt {
 	uint64_t *page_table;
-	struct spinlock lock;
+	spinlock lock;
 };
 
 extern struct kernel_pt kernel_pt;

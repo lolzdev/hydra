@@ -7,6 +7,8 @@ SRC:=core/riscv64/bootstrap.S\
      core/mem.c\
      core/init.c\
      core/sched.c\
+     core/cpu.c\
+     core/spinlock.c\
      core/mm/buddy.c\
      core/riscv64/isa.c\
      core/riscv64/timer.c\
@@ -39,7 +41,7 @@ clean:
 
 .PHONY: qemu
 qemu: $(ELF)
-	qemu-system-riscv64 -smp 4 -m 2G -M virt -nographic -kernel kernel.elf -d int,in_asm -D qemu.log
+	qemu-system-riscv64 -smp 3 -m 2G -M virt -nographic -kernel kernel.elf
 .PHONY: debug 
 debug: $(ELF)
 	qemu-system-riscv64 -smp 3 -m 2G -M virt -nographic -kernel kernel.elf -s -S

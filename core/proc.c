@@ -110,9 +110,11 @@ void process_kill(uint16_t pid)
 	sched_kill(pid);
 }
 
-uint16_t process_fork(struct process *proc)
+struct process_node *process_fork(struct process *proc)
 {
 	struct process_node *node = mm_alloc(sizeof(struct process_node));
+	memcpy(&node->proc, proc, sizeof(struct frame));
+
 	/* Assign process ID. */
 	node->proc.id = LAST_PID + 1;
 
@@ -130,12 +132,25 @@ uint16_t process_fork(struct process *proc)
 	uint64_t *parent_pt = proc->page_table;
 	vm_copy(node->proc.page_table, parent_pt);
 
-	memcpy(&node->proc.frame, &proc->frame, sizeof(struct frame));
 	node->proc.frame.a0 = 0;
 	node->proc.frame.pc += 4;
+
+	/* Create a stack for the process. */
+	size_t stack_pages = 4;
+	void *stack_backing = mm_alloc_pages(stack_pages);
+	uint64_t user_stack_top = 0x40000000;
+	uint64_t user_stack_base = user_stack_top - (stack_pages * VM_PAGE_SIZE);
+	uint64_t proc_stack_base = vm_get_phys(proc->page_table, user_stack_base) | HH_MASK;
+	for (size_t p = 0; p < stack_pages; p++) {
+		uint64_t va = user_stack_base + (p * VM_PAGE_SIZE);
+		uint64_t pa = vm_get_phys(kernel_pt.page_table, (uint64_t)stack_backing) + (p * VM_PAGE_SIZE);
+		vm_mmap(node->proc.page_table, va, pa, VM_PTE_VALID | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_USER);
+		memcpy((void *)((uint64_t)stack_backing + (p * VM_PAGE_SIZE)), (void *)(proc_stack_base + (p * VM_PAGE_SIZE)), VM_PAGE_SIZE);
+	}
+
 
 	/* Add the process to the linked list of running processes. */
 	sched_add(node);
 
-	return node->proc.id;
+	return node;
 }
