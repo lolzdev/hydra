@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <fdt.h>
 
 #define PAGE_SIZE 0x1000
 #define MIN_BLOCK PAGE_SIZE
@@ -23,7 +24,7 @@
  * Initialize the allocator by setting the whole
  * heap as free.
  */
-void buddy_init(void);
+void buddy_init(struct fdt_header *fdt_header);
 /*
  * Free a range of memory given a starting address
  * and a size.
@@ -75,5 +76,7 @@ void *mm_alloc_pages(size_t size);
  * specified by `size`.
  */
 void *mm_alloc(size_t size);
+
+void buddy_boot(void);
 
 #endif

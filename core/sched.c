@@ -11,7 +11,6 @@ struct process_node **current_proc;
 uint16_t *process_counts;
 uint16_t LAST_PID = 0;
 static uint16_t CPU_COUNT = 0;
-static uint64_t a = 0;
 static spinlock lock;
 extern struct cpu *CPUS;
 
@@ -97,7 +96,6 @@ void sched_tick(void)
 	} else {
 		current_proc[tp] = process_list[tp];
 	}
-	//uart_printf("tp: %d\n", tp);
 
 	spinlock_release(&lock);
 	//uart_printf("sched: %d\n", tp);

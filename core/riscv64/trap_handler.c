@@ -71,14 +71,12 @@ void trap_handler(void)
 			uart_puts("Store address misaligned\n");
 			break;
 		case 7:
+			uart_printf("sp: 0x%x, satp: 0x%x, tp: %d\nsepc: 0x%x\nstval: 0x%x\nscause: 0x%x\n", sp, satp, tp, sepc, stval, scause);
 			uart_puts("Store access fault\n");
-			break;
+			while(1);
 		case 8:
 			syscall_handle(&current_proc[tp]->proc.frame);
-			uint64_t test = current_proc[tp]->proc.frame.pc;
-			//uart_printf("fork %x\n", &current_proc[tp]->proc.frame.pc);
 			current_proc[tp]->proc.frame.pc += 4;
-			//uart_printf("fork %x\n", test + 4);
 			sched_tick();
 			break;
 		case 9:
@@ -95,6 +93,7 @@ void trap_handler(void)
 			while (1);
 			break;
 		case 15:
+			uart_printf("sp: 0x%x, satp: 0x%x, tp: %d\nsepc: 0x%x\nstval: 0x%x\nscause: 0x%x\n", sp, satp, tp, sepc, stval, scause);
 			uart_puts("Store page fault\n");
 			while (1);
 			break;

@@ -8,6 +8,7 @@
 #include <drivers/uart.h>
 #include <spinlock.h>
 #include <mem.h>
+#include <riscv64/vm/vm.h>
 
 #define POW2(x) (1 << (x))
 #define LEVEL_SIZE(x) (MIN_BLOCK * POW2(x))
@@ -20,6 +21,8 @@ struct block {
 };
 
 /* Provided by the linker */
+extern unsigned char __kernel_start[];
+extern unsigned char __kernel_end[];
 extern unsigned char __memory_start[];
 /*
  * Array of linked lists. Each linked list
@@ -30,25 +33,71 @@ static struct block *freelist[MAX_LEVEL+1];
 
 static spinlock lock;
 
-void buddy_init(void)
+static uint8_t initialized = 0;
+static uint64_t max_initialized_ptr = 0;
+
+void buddy_boot(void)
 {
 	lock.locked = 0;
 	lock.cpu = 0;
 	size_t ram_base = (size_t)__memory_start;
-	/* Currently the memory has a fixed size, should be changed */
-	size_t ram_size = 128 * 1024 * 1024;
+	size_t ram_size = 64 * 1024 * 1024;
 	size_t memory_end = ram_base + ram_size;
 
 	size_t memory_size = memory_end - ram_base;
 
 	mm_free_range((void *)__memory_start, memory_size);
-	uart_puts("Buddy allocator initialized.\n");
+}
+
+#define PMM_ALIGN_UP(x) (((x) + VM_PAGE_SIZE - 1) & ~(VM_PAGE_SIZE - 1))
+
+void buddy_init(struct fdt_header *fdt_header)
+{
+	lock.locked = 0;
+	lock.cpu = 0;
+
+	mem_map map = {0};
+	fdt_get_memory_map(fdt_header, &map);
+
+	uint64_t phys_ram_start = -1;
+	uint64_t phys_ram_end = 0;
+
+	for (size_t i = 0; i < MEM_MAP_MAX_REGIONS; i++) {
+		size_t base = map.regions[i].base;
+		size_t size = map.regions[i].size;
+		if (base < phys_ram_start && size > 0 && map.regions[i].type == REGION_FREE_RAM) {
+			phys_ram_start = map.regions[i].base;
+		}
+		size_t end = base + size;
+		if (end > phys_ram_end) phys_ram_end = end;
+	}
+	
+	if (phys_ram_start <= (size_t)__kernel_start - HH_MASK && phys_ram_end > (size_t)__kernel_end - HH_MASK) {
+		phys_ram_start = (size_t)__kernel_end - HH_MASK + VM_PAGE_SIZE;
+	}
+	
+	if (phys_ram_start < max_initialized_ptr - HH_MASK) {
+		phys_ram_start = max_initialized_ptr - HH_MASK + VM_PAGE_SIZE;
+	}
+
+	phys_ram_start = ALIGNUP(phys_ram_start, VM_PAGE_SIZE);
+	phys_ram_end = ALIGNUP(phys_ram_end, VM_PAGE_SIZE);
+
+	for (size_t i=phys_ram_start; i < phys_ram_end; i+=VM_PAGE_SIZE) {
+		vm_mmap(kernel_pt.page_table, i, i + HH_MASK, VM_PTE_VALID | VM_PTE_READ | VM_PTE_WRITE | VM_PTE_EXEC);
+	}
+	vm_reload();
+
+	mm_free_range((void *)phys_ram_start + HH_MASK, phys_ram_end - phys_ram_start);
+
+	initialized = 1;
+	uart_printf("Buddy allocator initialized with %d bytes of memory.\n", phys_ram_end - phys_ram_start);
 }
 
 void mm_free_range(void *start, size_t size)
 {
-	size_t start_addr = (size_t)start;
-	size_t aligned_start = ALIGNUP(start_addr, 4096);
+	uint64_t start_addr = (uint64_t)start;
+	uint64_t aligned_start = ALIGNUP(start_addr, 4096);
 
 	if (aligned_start > start_addr + size) return;
 	size -= (aligned_start - start_addr);
@@ -62,6 +111,7 @@ void mm_free_range(void *start, size_t size)
 	 * Create new blocks to cover all the available memory.
 	 */
 	while (current_addr + LEVEL_SIZE(0) <= end_addr) {
+		if (current_addr == 0x85780000) return;
 		uint8_t level = MAX_LEVEL;
 		while (level > 0) {
 			size_t blk_size = LEVEL_SIZE(level);
@@ -236,6 +286,7 @@ void *mm_alloc_pages(size_t size)
 
 	if (b == NULL) uart_puts("OOM!!!!!!!\n");
 
+	if (!initialized && max_initialized_ptr < (uint64_t)b + LEVEL_SIZE(level)) max_initialized_ptr = (uint64_t)b + LEVEL_SIZE(level); 
 	return b;
 }
 

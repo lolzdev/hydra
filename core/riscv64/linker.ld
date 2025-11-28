@@ -22,8 +22,8 @@ SECTIONS
 	} :trampoline
 
 	_kernel_lma_start = .;
-
 	. += 0xFFFFFFFF00000000;
+	PROVIDE(__kernel_start = .);
 
 	.text : AT(_kernel_lma_start) {
 		_entry = .;
@@ -58,4 +58,5 @@ SECTIONS
 
 	. = ALIGN(4096);
 	PROVIDE(__memory_start = .);
+	PROVIDE(__kernel_end = .);
 }

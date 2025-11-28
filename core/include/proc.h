@@ -52,12 +52,12 @@ struct process {
 	uint64_t satp;
 	uint16_t id;
 	uint16_t uid;
-} __attribute__((packed));
+};
 
 struct process_node {
 	struct process proc;
 	struct process_node *next;
-} __attribute__((packed));
+};
 
 /* Create a new process given the ELF file address */
 void process_create(uint64_t address);

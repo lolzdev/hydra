@@ -5,7 +5,7 @@
 #include <spinlock.h>
 
 #define VM_PAGE_SIZE 0x1000
-#define HH_MASK 0xffffffff00000000UL
+#define HH_MASK 0xffffffff00000000ULL
 
 #define VM_PTE_VALID 0x1
 #define VM_PTE_READ 0x1 << 1

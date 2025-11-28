@@ -97,7 +97,7 @@ void uart_printf(char* format, ...)
 			break;
 
 		case 'x': 
-			i = va_arg(arg, unsigned long);
+			i = va_arg(arg, uint64_t);
 			uart_puts(convert(i, 16, buffer));
 			break;
 		
