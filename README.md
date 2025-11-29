@@ -4,8 +4,6 @@
 
 <h1 align="center">Hydra</h1>
 
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/lolzdev/hydra/build.yml) ![Progress](https://img.shields.io/badge/progress-wip-orange)
-
 ## Introduction
 Hydra is a microkernel with the main goal of keeping the codebase [as small and simple as possible](https://suckless.org/philosophy/).
 A smaller codebase can be easily maintained and is less prone to bugs or issues, and modern monolithic kernels tend to be tremendously big (e.g. Linux, FreeBSD).
@@ -29,8 +27,8 @@ After all the requirements are satisfied you can just fire the `make` command. T
 - [X] Virtual memory management
 - [X] ACPI table parsing
 - [X] APIC configuration
-- [X] HPET timer
-- [X] Userspace
+- [ ] HPET timer
+- [ ] Userspace
 - [ ] IPC
 - [ ] Process management
 - [ ] Disks management daemons (SATA, NVME)
