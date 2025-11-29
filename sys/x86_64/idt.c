@@ -158,7 +158,7 @@ void idt_init(void)
 	functions[12] = int_stack_segment;
 	functions[13] = int_gpf;
 	functions[14] = int_page_fault;
-	functions[32] = int_tmr;
+	functions[32] = int_void;
 	functions[33] = int_keyboard;
 	functions[39] = int_systimer;
 }

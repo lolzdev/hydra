@@ -30,11 +30,8 @@
 #include <sched.h>
 #include <x86_64/gdt.h>
 #include <x86_64/idt.h>
-#include <x86_64/usr.h>
-#include <x86_64/syscall.h>
 #include <x86_64/acpi.h>
 #include <x86_64/apic.h>
-#include <x86_64/hpet.h>
 #include <x86_64/inst.h>
 #include <limine.h>
 
@@ -73,7 +70,6 @@ static volatile LIMINE_REQUESTS_END_MARKER;
 
 void _start(void)
 {
-	hpet_disable_pit();
 	struct limine_framebuffer *fb = framebuffer_request.response->framebuffers[0];
 	fb_init(fb->width, fb->height, fb->address);
 	gdt_init();
@@ -87,12 +83,6 @@ void _start(void)
 	kprintf("Paging initialized.\n");
 	acpi_init();
 	kprintf("ACPI initialized.\n");
-	hpet_init();
-	kprintf("HPET initialized.\n");
-	//syscall_init();
-	sched_init();
-	usr_init(module_request.response->modules, module_request.response->module_count);
-	sched_start(module_request.response->modules, module_request.response->module_count);
 	
 	while(1);
 }
