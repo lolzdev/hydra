@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="200" src="https://github.com/lolzdev/hydra/raw/refs/heads/x86_64/assets/hydra.svg" />
+  <img width="200" src="https://git.sr.ht/~lolzdev/hydra/blob/master/assets/hydra.svg" />
 </p>
 
 <h1 align="center">Hydra</h1>
